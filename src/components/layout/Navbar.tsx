@@ -27,22 +27,18 @@ export function Navbar() {
   return (
     <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/80 border-b border-border/60">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-        <a 
-          href="#"
-          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          className="flex items-center gap-2 group cursor-pointer"
-        >
+        <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />
           <span className="font-script text-xl tracking-wide text-foreground">
             {COUPLE.groom} & {COUPLE.bride}
           </span>
-        </a>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-5">
           {links.map((l) => (
             <a
               key={l.label}
-              href={`#${l.hash}`}
+              href={`/#${l.hash}`}
               onClick={(e) => scrollToSection(e, l.hash)}
               className="relative text-sm text-foreground/80 hover:text-foreground transition group"
             >
@@ -75,7 +71,7 @@ export function Navbar() {
                 {links.map((l) => (
                   <a
                     key={l.label}
-                    href={`#${l.hash}`}
+                    href={`/#${l.hash}`}
                     onClick={(e) => { setOpen(false); scrollToSection(e, l.hash); }}
                     className="px-4 py-3 rounded-xl hover:bg-secondary text-foreground text-left"
                   >

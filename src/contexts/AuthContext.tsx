@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth, ADMIN_EMAIL } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,16 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const logout = useCallback(async () => {
+    try {
+      const { signOut } = await import("firebase/auth");
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  }, [auth]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -28,17 +38,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
-
-  const logout = async () => {
-    const { signOut } = await import("firebase/auth");
-    await signOut(auth);
-  };
+  }, [auth]);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
+  const value = {
+    user,
+    isAdmin,
+    loading,
+    logout
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
