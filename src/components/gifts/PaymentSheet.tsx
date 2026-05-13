@@ -1,0 +1,146 @@
+import { useEffect, useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Copy, QrCode, Check } from "lucide-react";
+import { toast } from "sonner";
+import { brl } from "@/lib/format";
+import type { Gift } from "@/data/mockGifts";
+
+const PIX_KEY = "helena-mateus@casamento.com";
+
+export function PaymentSheet({
+  gift,
+  open,
+  onOpenChange,
+}: {
+  gift: Gift;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const remaining = Math.max(0, gift.total - gift.raised);
+  const [amount, setAmount] = useState<string>("");
+  const [installments, setInstallments] = useState("1");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (open) setAmount(remaining.toString());
+  }, [open, remaining]);
+
+  const copyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(PIX_KEY);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      toast.success("Chave PIX copiada!");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const confirm = () => {
+    toast.success("Pagamento registrado! 💛", { description: `Obrigado por presentear ${gift.title}.` });
+    onOpenChange(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl max-h-[92vh] overflow-y-auto sm:max-w-lg sm:mx-auto"
+      >
+        <SheetHeader className="text-left">
+          <SheetTitle className="font-script text-3xl">Presentear</SheetTitle>
+          <SheetDescription>{gift.title}</SheetDescription>
+        </SheetHeader>
+
+        <div className="px-4 pb-6 space-y-6">
+          <div className="bg-secondary/60 rounded-2xl p-4">
+            <p className="text-xs text-muted-foreground">Falta arrecadar</p>
+            <p className="text-2xl font-semibold">{brl(remaining)}</p>
+          </div>
+
+          <div>
+            <Label htmlFor="valor" className="text-sm">
+              Valor que deseja contribuir
+            </Label>
+            <div className="relative mt-2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+              <Input
+                id="valor"
+                type="number"
+                min={1}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="pl-10 h-12 text-lg rounded-xl"
+              />
+            </div>
+          </div>
+
+          <Tabs defaultValue="pix" className="w-full">
+            <TabsList className="grid grid-cols-3 w-full rounded-full">
+              <TabsTrigger value="pix" className="rounded-full">PIX</TabsTrigger>
+              <TabsTrigger value="boleto" className="rounded-full">Boleto</TabsTrigger>
+              <TabsTrigger value="card" className="rounded-full">Cartão</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pix" className="mt-4 space-y-4">
+              <div className="aspect-square max-w-[180px] mx-auto bg-pastel-gradient rounded-2xl flex items-center justify-center border border-border">
+                <QrCode className="w-24 h-24 text-foreground/70" strokeWidth={1.2} />
+              </div>
+              <div className="bg-secondary rounded-xl p-3 flex items-center justify-between gap-2">
+                <span className="text-sm truncate">{PIX_KEY}</span>
+                <Button size="sm" variant="ghost" onClick={copyPix} className="shrink-0">
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="boleto" className="mt-4 space-y-3">
+              <div className="bg-secondary rounded-xl p-4 text-sm font-mono text-foreground/80 break-all">
+                34191.79001 01043.510047 91020.150008 8 96550000010000
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O boleto será enviado por e-mail e tem vencimento em 3 dias úteis.
+              </p>
+            </TabsContent>
+
+            <TabsContent value="card" className="mt-4 space-y-3">
+              <Input placeholder="Número do cartão" className="h-12 rounded-xl" />
+              <Input placeholder="Nome impresso no cartão" className="h-12 rounded-xl" />
+              <div className="grid grid-cols-2 gap-3">
+                <Input placeholder="Validade (MM/AA)" className="h-12 rounded-xl" />
+                <Input placeholder="CVV" className="h-12 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-sm">Parcelamento</Label>
+                <Select value={installments} onValueChange={setInstallments}>
+                  <SelectTrigger className="h-12 rounded-xl mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 6, 12].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n}x de {brl(Number(amount || 0) / n)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Button
+            onClick={confirm}
+            className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base"
+          >
+            Confirmar contribuição
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
