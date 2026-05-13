@@ -6,11 +6,14 @@ import { brl } from "@/lib/format";
 import { useViewMode } from "@/contexts/ViewModeContext";
 import type { Gift } from "@/data/mockGifts";
 import { PaymentSheet } from "./PaymentSheet";
+import { EditGiftDialog, DeleteGiftDialog } from "./EditGiftDialog";
 
 export function GiftCard({ gift }: { gift: Gift }) {
   const { mode } = useViewMode();
   const isAdmin = mode === "admin";
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const pct = Math.min(100, Math.round((gift.raised / gift.total) * 100));
   const completed = gift.raised >= gift.total;
 
@@ -38,12 +41,14 @@ export function GiftCard({ gift }: { gift: Gift }) {
             <div className="absolute top-3 right-3 flex gap-2">
               <button
                 aria-label="Editar"
+                onClick={() => setEditOpen(true)}
                 className="w-9 h-9 rounded-full bg-card/95 backdrop-blur flex items-center justify-center shadow-md hover:bg-card transition"
               >
                 <Pencil className="w-4 h-4 text-foreground" />
               </button>
               <button
                 aria-label="Excluir"
+                onClick={() => setDeleteOpen(true)}
                 className="w-9 h-9 rounded-full bg-card/95 backdrop-blur flex items-center justify-center shadow-md hover:bg-destructive hover:text-destructive-foreground transition"
               >
                 <Trash2 className="w-4 h-4" />
@@ -78,6 +83,8 @@ export function GiftCard({ gift }: { gift: Gift }) {
         </div>
       </div>
       <PaymentSheet gift={gift} open={open} onOpenChange={setOpen} />
+      <EditGiftDialog gift={gift} open={editOpen} onOpenChange={setEditOpen} />
+      <DeleteGiftDialog gift={gift} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </>
   );
 }
