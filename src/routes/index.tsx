@@ -4,6 +4,8 @@ import { Hero } from "@/components/home/Hero";
 import { Countdown } from "@/components/home/Countdown";
 import { NossaHistoria } from "@/components/home/NossaHistoria";
 import { OndeVaiSer } from "@/components/home/OndeVaiSer";
+import { RSVP } from "@/components/home/RSVP";
+import { Recados } from "@/components/home/Recados";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,6 +24,8 @@ function Index() {
       <Countdown />
       <NossaHistoria />
       <OndeVaiSer />
+      <RSVP />
+      <Recados />
     </SiteLayout>
   );
 }

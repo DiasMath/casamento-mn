@@ -1,5 +1,6 @@
 import heroImg from "@/assets/hero-couple.jpg";
 import { COUPLE, WEDDING_DATE } from "@/data/mockGifts";
+import { Flower } from "@/components/decor/Flower";
 
 const dateStr = WEDDING_DATE.toLocaleDateString("pt-BR", {
   day: "2-digit",
@@ -18,6 +19,10 @@ export function Hero() {
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/90" />
+      <Flower className="absolute top-24 left-4 sm:left-10 z-10" size={90} variant="yellow" rotate={-15} opacity={0.85} />
+      <Flower className="absolute top-32 right-6 sm:right-16 z-10" size={70} variant="blue" rotate={20} opacity={0.85} />
+      <Flower className="absolute bottom-24 left-10 z-10 hidden sm:block" size={60} variant="mixed" rotate={45} opacity={0.8} />
+      <Flower className="absolute bottom-16 right-8 z-10" size={80} variant="yellow" rotate={-30} opacity={0.85} />
       <div className="relative z-10 px-6 text-center max-w-2xl">
         <p className="uppercase tracking-[0.4em] text-xs sm:text-sm text-primary-foreground/80 bg-primary/70 inline-block px-4 py-1.5 rounded-full backdrop-blur">
           Save the Date

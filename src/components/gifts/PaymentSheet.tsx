@@ -81,9 +81,8 @@ export function PaymentSheet({
           </div>
 
           <Tabs defaultValue="pix" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full rounded-full">
+            <TabsList className="grid grid-cols-2 w-full rounded-full">
               <TabsTrigger value="pix" className="rounded-full">PIX</TabsTrigger>
-              <TabsTrigger value="boleto" className="rounded-full">Boleto</TabsTrigger>
               <TabsTrigger value="card" className="rounded-full">Cartão</TabsTrigger>
             </TabsList>
 
@@ -97,15 +96,6 @@ export function PaymentSheet({
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
-            </TabsContent>
-
-            <TabsContent value="boleto" className="mt-4 space-y-3">
-              <div className="bg-secondary rounded-xl p-4 text-sm font-mono text-foreground/80 break-all">
-                34191.79001 01043.510047 91020.150008 8 96550000010000
-              </div>
-              <p className="text-xs text-muted-foreground">
-                O boleto será enviado por e-mail e tem vencimento em 3 dias úteis.
-              </p>
             </TabsContent>
 
             <TabsContent value="card" className="mt-4 space-y-3">
