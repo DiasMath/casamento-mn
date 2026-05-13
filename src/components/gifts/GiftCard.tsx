@@ -6,7 +6,8 @@ import { brl } from "@/lib/format";
 import { useViewMode } from "@/contexts/ViewModeContext";
 import type { Gift } from "@/data/mockGifts";
 import { PaymentSheet } from "./PaymentSheet";
-import { EditGiftDialog, DeleteGiftDialog } from "./EditGiftDialog";
+import { EditGiftDialog } from "./EditGiftDialog";
+import { DeleteGiftDialog } from "./DeleteGiftDialog";
 
 export function GiftCard({ gift }: { gift: Gift }) {
   const { mode } = useViewMode();

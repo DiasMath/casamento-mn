@@ -1,21 +1,77 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { SiteLayout } from "@/components/layout/SiteLayout";
-import { Gift, TrendingUp, Users, ArrowRight, LogOut } from "lucide-react";
-import { mockGifts } from "@/data/mockGifts";
+import { useEffect, useState } from "react";
+import { Gift, TrendingUp, Users, ArrowRight, LogOut, Plus } from "lucide-react";
+import { Gift as FirestoreGift } from "../lib/firestoreService";
 import { brl } from "@/lib/format";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { AddGiftForm } from "./AddGiftForm";
+import { EditGiftDialog } from "@/components/gifts/EditGiftDialog";
+import { DeleteGiftDialog } from "@/components/gifts/DeleteGiftDialog";
 
 export function AdminPainel() {
   const { user, isAdmin, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const [gifts, setGifts] = useState<FirestoreGift[]>([]);
+  const [loadingGifts, setLoadingGifts] = useState(true);
+  const [editingGift, setEditingGift] = useState<FirestoreGift | null>(null);
+  const [deletingGift, setDeletingGift] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
       navigate("/admin/login");
     }
   }, [loading, isAdmin, navigate]);
+
+  useEffect(() => {
+    const loadGifts = async () => {
+      try {
+        setLoadingGifts(true);
+        const giftList = await import("../lib/firestoreService").then(
+          (mod) => mod.getGifts()
+        );
+        setGifts(giftList);
+      } catch (error) {
+        console.error("Error loading gifts:", error);
+      } finally {
+        setLoadingGifts(false);
+      }
+    };
+
+    loadGifts();
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/admin/login");
+  };
+
+  const handleEditGift = (gift: FirestoreGift) => {
+    setEditingGift(gift);
+  };
+
+  const handleDeleteGift = (id: string) => {
+    const gift = gifts.find(g => g.id === id);
+    if (gift) {
+      setDeletingGift({ id: gift.id, title: gift.title });
+    }
+  };
+
+  const handleGiftUpdated = async () => {
+    try {
+      await loadGifts(); // Reload gifts
+    } finally {
+      setEditingGift(null);
+    }
+  };
+
+  const handleGiftDeleted = async () => {
+    try {
+      await loadGifts(); // Reload gifts
+    } finally {
+      setDeletingGift(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -27,18 +83,18 @@ export function AdminPainel() {
 
   if (!isAdmin) return null;
 
-  const totalRaised = mockGifts.reduce((s, g) => s + g.raised, 0);
-  const totalValue = mockGifts.reduce((s, g) => s + g.total, 0);
-  const completed = mockGifts.filter((g) => g.raised >= g.total).length;
+  const totalRaised = gifts.reduce((s, g) => s + g.raised, 0);
+  const totalValue = gifts.reduce((s, g) => s + g.total, 0);
+  const completed = gifts.filter((g) => g.raised >= g.total).length;
 
   const stats = [
     { label: "Total arrecadado", value: brl(totalRaised), icon: TrendingUp },
     { label: "Meta da lista", value: brl(totalValue), icon: Gift },
-    { label: "Presentes garantidos", value: `${completed} / ${mockGifts.length}`, icon: Users },
+    { label: "Presentes garantidos", value: `${completed} / ${gifts.length}`, icon: Users },
   ];
 
   return (
-    <SiteLayout>
+    <>
       <section className="px-4 pt-10 pb-20 max-w-5xl mx-auto">
         <div>
           <p className="font-script text-3xl text-primary">olá, noivos</p>
@@ -63,31 +119,75 @@ export function AdminPainel() {
             <h2 className="font-medium text-lg">Gerenciar presentes</h2>
             <p className="text-sm text-muted-foreground">Editar, excluir ou adicionar novos itens à lista.</p>
           </div>
-          <Link
-            to="/cha-de-panela"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
-          >
-            Ir para a lista <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex-1">
+            <Link
+              to="/cha-de-panela"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+            >
+              Ir para a lista <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Button
+              onClick={() => navigate("/admin/add-gift")}
+              className="ml-2 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+            >
+              Novo Presente <Plus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-8 bg-card rounded-2xl border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-border bg-secondary/40">
-            <h2 className="font-medium">Últimas contribuições</h2>
+        {gifts.length > 0 && (
+          <div className="mt-8 bg-card rounded-2xl border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-border bg-secondary/40">
+              <h2 className="font-medium">Últimas contribuições</h2>
+            </div>
+            <ul className="divide-y divide-border">
+              {gifts
+                .slice(0, 5)
+                .map((g, i) => (
+                  <li key={g.id} className="px-5 py-4 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{g.title}</p>
+                      <p className="text-xs text-muted-foreground">Convidado #{i + 1}</p>
+                    </div>
+                    <span className="text-sm font-medium tabular-nums">{brl(Math.round(g.raised / 2))}</span>
+                  </li>
+                ))}
+            </ul>
           </div>
-          <ul className="divide-y divide-border">
-            {mockGifts.slice(0, 5).map((g, i) => (
-              <li key={g.id} className="px-5 py-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{g.title}</p>
-                  <p className="text-xs text-muted-foreground">Convidado #{i + 1}</p>
-                </div>
-                <span className="text-sm font-medium tabular-nums">{brl(Math.round(g.raised / 2))}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        )}
+
+        {!loadingGifts && gifts.length === 0 && (
+          <div className="mt-8 text-center py-8">
+            <p className="text-sm text-muted-foreground">
+              Nenhum presente encontrado. Clique em "Novo Presente" para adicionar o primeiro item.
+            </p>
+          </div>
+        )}
       </section>
-    </SiteLayout>
+
+      {editingGift && (
+        <EditGiftDialog
+          gift={editingGift}
+          open={editingGift !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingGift(null);
+            else if (open && editingGift) setEditingGift(editingGift);
+          }}
+          onGiftUpdated={handleGiftUpdated}
+        />
+      )}
+
+      {deletingGift && (
+        <DeleteGiftDialog
+          giftId={deletingGift.id}
+          giftTitle={deletingGift.title}
+          open={deletingGift !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeletingGift(null);
+          }}
+          onGiftDeleted={handleGiftDeleted}
+        />
+      )}
+    </>
   );
 }

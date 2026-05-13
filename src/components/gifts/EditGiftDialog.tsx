@@ -21,10 +21,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { Gift } from "@/data/mockGifts";
+import { updateGift } from "@/lib/firestoreService";
 
 interface EditGiftDialogProps {
-  gift: Gift;
+  gift: {
+    id: string;
+    title: string;
+    image: string;
+    total: number;
+    raised: number;
+  };
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
@@ -44,10 +50,34 @@ export function EditGiftDialog({ gift, open, onOpenChange }: EditGiftDialogProps
     }
   }, [open, gift]);
 
-  const save = (e: React.FormEvent) => {
+  const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Presente atualizado!", { description: title });
-    onOpenChange(false);
+    try {
+      const totalNum = parseFloat(total);
+      const raisedNum = parseFloat(raised);
+      if (isNaN(totalNum) || totalNum <= 0) {
+        throw new Error("O valor total deve ser um número positivo");
+      }
+      if (isNaN(raisedNum) || raisedNum < 0) {
+        throw new Error("O valor arrecadado deve ser um número não negativo");
+      }
+      if (!title.trim() || !image.trim()) {
+        throw new Error("Título e URL da imagem são obrigatórios");
+      }
+
+      await updateGift(gift.id, {
+        title: title.trim(),
+        image: image.trim(),
+        total: totalNum,
+        raised: raisedNum
+      });
+
+      toast.success("Presente atualizado!");
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error updating gift:", error);
+      toast.error(error.message || "Erro ao atualizar presente");
+    }
   };
 
   return (
@@ -90,36 +120,5 @@ export function EditGiftDialog({ gift, open, onOpenChange }: EditGiftDialogProps
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface DeleteGiftDialogProps {
-  gift: Gift;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}
-
-export function DeleteGiftDialog({ gift, open, onOpenChange }: DeleteGiftDialogProps) {
-  const confirm = () => {
-    toast.success("Presente excluído", { description: gift.title });
-    onOpenChange(false);
-  };
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="rounded-3xl">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir presente?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja excluir <span className="font-medium text-foreground">{gift.title}</span>? Essa ação não pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={confirm} className="rounded-full bg-destructive text-destructive-foreground hover:opacity-90">
-            Excluir
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }
