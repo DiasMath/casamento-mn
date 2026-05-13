@@ -4,10 +4,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Check, Loader2, QrCode } from "lucide-react";
+import { Copy, Check, Loader2, QrCode, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { Gift } from "@/lib/firestoreService";
 
 export function PaymentSheet({
@@ -22,22 +23,72 @@ export function PaymentSheet({
   const remaining = Math.max(0, gift.total - gift.raised);
   const [amount, setAmount] = useState<string>("");
   const [name, setName] = useState("");
-  const [installments, setInstallments] = useState("1");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Novos estados para o fluxo do PIX Dinâmico
+  // Estados do fluxo do PIX
   const [step, setStep] = useState<"form" | "pix">("form");
   const [pixData, setPixData] = useState<{ qr_code: string; qr_code_base64: string } | null>(null);
+  const [expiresIn, setExpiresIn] = useState(3600); // 1 hora em segundos
 
+  // Limpa os estados ao abrir/fechar o modal
   useEffect(() => {
     if (open) {
       setAmount(remaining.toString());
       setName("");
-      setStep("form"); // Volta para o form sempre que abrir
+      setStep("form");
       setPixData(null);
+      setExpiresIn(3600);
     }
   }, [open, remaining]);
+
+  // Função para voltar ao estado inicial
+  const handleCancelPix = () => {
+    setPixData(null);
+    setExpiresIn(3600);
+    setStep("form");
+  };
+
+  // Cronómetro do PIX
+  useEffect(() => {
+    if (step === "pix") {
+      if (expiresIn > 0) {
+        const timer = setInterval(() => {
+          setExpiresIn((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+      } else {
+        toast.error("O tempo do PIX expirou. Por favor, gere um novo código.");
+        handleCancelPix();
+      }
+    }
+  }, [step, expiresIn]);
+
+  // ESCUTA EM TEMPO REAL: Detecta quando o valor no Firebase aumenta
+  useEffect(() => {
+    if (step === "pix" && gift.id && db) {
+      const giftRef = doc(db, "gifts", gift.id);
+      
+      const unsubscribe = onSnapshot(giftRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Se o valor arrecadado for maior do que o inicial, o pagamento foi confirmado
+          if (data.raised > gift.raised) {
+            toast.success("Pagamento confirmado! Muito obrigado pelo carinho! ❤️");
+            onOpenChange(false);
+          }
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [step, gift.id, gift.raised, onOpenChange]);
+
+  const formatTime = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   const copyPix = async (textToCopy: string) => {
     try {
@@ -52,16 +103,13 @@ export function PaymentSheet({
 
   const handleGeneratePix = async () => {
     const value = parseFloat(amount);
-
     if (isNaN(value) || value <= 0) {
-      toast.error("Por favor, insira um valor válido.");
+      toast.error("Insira um valor válido.");
       return;
     }
 
     setLoading(true);
-
     try {
-      // Chama a nossa API na Vercel
       const response = await fetch('/api/generate-pix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,20 +122,17 @@ export function PaymentSheet({
       });
 
       const data = await response.json();
-
       if (!response.ok) throw new Error(data.error || "Erro ao gerar PIX");
 
-      // Salva os dados do PIX e avança para a tela do QR Code
       setPixData({
         qr_code: data.qr_code,
         qr_code_base64: `data:image/png;base64,${data.qr_code_base64}`
       });
       setStep("pix");
-      toast.success("PIX gerado com sucesso! Válido por 1 hora.");
-      
+      toast.success("PIX gerado com sucesso!");
     } catch (error) {
-      console.error("Erro ao gerar PIX:", error);
-      toast.error("Erro ao conectar com o banco. Tente novamente.");
+      console.error(error);
+      toast.error("Erro ao gerar pagamento. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -95,10 +140,7 @@ export function PaymentSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="rounded-t-3xl max-h-[92vh] overflow-y-auto sm:max-w-lg sm:mx-auto"
-      >
+      <SheetContent side="bottom" className="rounded-t-3xl max-h-[92vh] overflow-y-auto sm:max-w-lg sm:mx-auto">
         <SheetHeader className="text-left mb-6">
           <SheetTitle className="font-script text-3xl">Presentear</SheetTitle>
         </SheetHeader>
@@ -125,15 +167,12 @@ export function PaymentSheet({
             </div>
 
             <div>
-              <Label htmlFor="valor" className="text-sm">
-                Valor que deseja contribuir
-              </Label>
+              <Label htmlFor="valor" className="text-sm">Valor que deseja contribuir</Label>
               <div className="relative mt-2">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
                 <Input
                   id="valor"
                   type="number"
-                  min={1}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="pl-10 h-12 text-lg rounded-xl"
@@ -146,32 +185,26 @@ export function PaymentSheet({
                 <TabsTrigger value="pix" className="rounded-full">PIX</TabsTrigger>
                 <TabsTrigger value="card" className="rounded-full" disabled>Cartão (Em breve)</TabsTrigger>
               </TabsList>
-
               <TabsContent value="pix" className="mt-6">
                 <Button
                   onClick={handleGeneratePix}
                   disabled={loading || !amount}
                   className="w-full h-14 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-lg font-medium"
                 >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <QrCode className="w-5 h-5 mr-2" /> Gerar PIX
-                    </>
-                  )}
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><QrCode className="w-5 h-5 mr-2" /> Gerar PIX</>}
                 </Button>
               </TabsContent>
             </Tabs>
           </div>
         ) : (
-          /* TELA 2: EXIBIÇÃO DO QR CODE */
           <div className="px-4 pb-6 flex flex-col items-center space-y-6 animate-in fade-in zoom-in duration-300">
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-1">
               <h3 className="text-xl font-semibold">Escaneie o QR Code</h3>
-              <p className="text-sm text-muted-foreground">
-                Abra o app do seu banco e escaneie o código abaixo. <br/> Ele expira em 1 hora.
-              </p>
+              <p className="text-sm text-muted-foreground">Abra o app do seu banco e pague o QR Code abaixo.</p>
+              <div className="flex items-center justify-center gap-1.5 mt-2 text-sm font-medium text-amber-600 bg-amber-50/80 py-1.5 px-4 rounded-full border border-amber-200">
+                <Clock className="w-4 h-4" />
+                <span>Expira em: {formatTime(expiresIn)}</span>
+              </div>
             </div>
 
             {pixData?.qr_code_base64 && (
@@ -183,16 +216,8 @@ export function PaymentSheet({
             <div className="w-full space-y-2">
               <Label className="text-center block">Ou copie o código PIX</Label>
               <div className="flex gap-2">
-                <Input 
-                  readOnly 
-                  value={pixData?.qr_code || ""} 
-                  className="bg-secondary/50 font-mono text-xs h-12"
-                />
-                <Button 
-                  onClick={() => copyPix(pixData?.qr_code || "")}
-                  className="h-12 px-4 shrink-0"
-                  variant="secondary"
-                >
+                <Input readOnly value={pixData?.qr_code || ""} className="bg-secondary/50 font-mono text-xs h-12" />
+                <Button onClick={() => copyPix(pixData?.qr_code || "")} className="h-12 px-4 shrink-0" variant="secondary">
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
@@ -200,12 +225,14 @@ export function PaymentSheet({
 
             <div className="flex items-center gap-3 p-4 bg-primary/10 text-primary rounded-xl w-full">
               <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-              <p className="text-xs font-medium">
-                Aguardando pagamento... Esta tela será atualizada automaticamente assim que o banco confirmar.
-              </p>
+              <p className="text-xs font-medium">Aguardando pagamento. Esta tela será atualizada automaticamente assim que o banco confirmar!</p>
             </div>
 
-            <Button variant="ghost" onClick={() => setStep("form")} className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelPix} 
+              className="mt-2 w-full h-12 rounded-full border-border/60 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
               Cancelar e voltar
             </Button>
           </div>
