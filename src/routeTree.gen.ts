@@ -9,38 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ChaDePanelaRouteImport } from './routes/cha-de-panela'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminPainelRouteImport } from './routes/admin.painel'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 
+const ChaDePanelaRoute = ChaDePanelaRouteImport.update({
+  id: '/cha-de-panela',
+  path: '/cha-de-panela',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPainelRoute = AdminPainelRouteImport.update({
+  id: '/admin/painel',
+  path: '/admin/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cha-de-panela': typeof ChaDePanelaRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/painel': typeof AdminPainelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cha-de-panela': typeof ChaDePanelaRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/painel': typeof AdminPainelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cha-de-panela': typeof ChaDePanelaRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/painel': typeof AdminPainelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/cha-de-panela' | '/admin/login' | '/admin/painel'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/cha-de-panela' | '/admin/login' | '/admin/painel'
+  id: '__root__' | '/' | '/cha-de-panela' | '/admin/login' | '/admin/painel'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChaDePanelaRoute: typeof ChaDePanelaRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminPainelRoute: typeof AdminPainelRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/cha-de-panela': {
+      id: '/cha-de-panela'
+      path: '/cha-de-panela'
+      fullPath: '/cha-de-panela'
+      preLoaderRoute: typeof ChaDePanelaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +85,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/painel': {
+      id: '/admin/painel'
+      path: '/admin/painel'
+      fullPath: '/admin/painel'
+      preLoaderRoute: typeof AdminPainelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChaDePanelaRoute: ChaDePanelaRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminPainelRoute: AdminPainelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
