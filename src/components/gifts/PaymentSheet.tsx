@@ -229,7 +229,7 @@ export function PaymentSheet({
 
             <div className="flex items-center gap-3 p-4 bg-primary/10 text-primary rounded-xl w-full">
               <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-              <p className="text-xs font-medium">Aguardando pagamento... A tela atualizará sozinha.</p>
+              <p className="text-xs font-medium">Aguardando pagamento.Esta tela será atualizada automaticamente assim que o banco confirmar!</p>
             </div>
 
             <Button 
