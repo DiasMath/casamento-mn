@@ -1,15 +1,15 @@
 import { Heart } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-import { COUPLE } from "@/data/mockGifts";
+import { Link } from "react-router-dom";
+import { COUPLE } from "@/lib/constants";
 import { Flower } from "@/components/decor/Flower";
 
 export function Footer() {
   return (
-    <footer className="relative mt-24 border-t border-border bg-secondary/40 overflow-hidden">
+    <footer className="relative border-t border-border overflow-hidden">
       <Flower className="absolute -top-4 left-6" size={70} variant="yellow" rotate={20} opacity={0.45} />
       <Flower className="absolute -bottom-4 right-6" size={90} variant="blue" rotate={-15} opacity={0.45} />
 
-      <div className="relative max-w-6xl mx-auto px-4 py-12 flex flex-col items-center gap-5 text-center">
+      <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center gap-5 text-center">
         <Heart className="w-6 h-6 text-primary fill-primary/40" />
         <p className="font-script text-3xl">
           {COUPLE.bride} & {COUPLE.groom}
@@ -21,12 +21,11 @@ export function Footer() {
         <Link
           to="/admin/login"
           aria-label="Acesso restrito"
-          title="•"
-          className="text-xs text-muted-foreground/80 mt-4 hover:text-primary transition select-none"
+          className="text-xs text-muted-foreground/60 mt-4 select-none"
         >
           © {new Date().getFullYear()} — Feito com{" "}
           <span className="inline-flex items-center">
-            <Heart className="inline w-3 h-3 mx-0.5 text-primary fill-primary/60" />
+            <Heart className="inline w-3 h-3 mx-0.5 text-muted-foreground/60" />
           </span>{" "}
           amor
         </Link>

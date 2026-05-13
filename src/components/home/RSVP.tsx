@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, Sparkles } from "lucide-react";
-import { Flower } from "@/components/decor/Flower";
+import { Flower, Branch, Vine } from "@/components/decor/Flower";
 
 export function RSVP() {
   const [name, setName] = useState("");
@@ -25,9 +25,17 @@ export function RSVP() {
   };
 
   return (
-    <section id="rsvp" className="relative px-4 py-20 sm:py-28 overflow-hidden">
-      <Flower className="absolute top-6 right-6" size={80} variant="yellow" rotate={15} opacity={0.55} />
-      <Flower className="absolute bottom-10 left-4" size={90} variant="blue" rotate={-20} opacity={0.5} />
+    <section id="rsvp" className="relative px-4 py-20 sm:py-28 overflow-hidden" style={{ scrollMarginTop: "80px" }}>
+      <Branch className="absolute -top-4 -right-8 hidden sm:block" size={140} rotate={140} opacity={0.4} />
+      <Flower className="absolute top-4 right-4 sm:right-8" size={75} variant="yellow" rotate={20} opacity={0.55} />
+      <Flower className="absolute top-16 right-16 hidden sm:block" size={45} variant="blue" rotate={-10} opacity={0.45} />
+      <Flower className="absolute top-8 left-8 hidden sm:block" size={50} variant="mixed" rotate={30} opacity={0.4} />
+      <Vine className="absolute top-0 left-0 hidden sm:block" size={100} rotate={5} opacity={0.35} />
+      <Branch className="absolute -bottom-4 -left-8 hidden sm:block" size={150} rotate={-10} opacity={0.4} />
+      <Flower className="absolute bottom-8 left-4 sm:left-8" size={85} variant="blue" rotate={-25} opacity={0.5} />
+      <Flower className="absolute bottom-20 left-16 hidden sm:block" size={40} variant="yellow" rotate={15} opacity={0.45} />
+      <Flower className="absolute bottom-12 right-6 hidden sm:block" size={55} variant="mixed" rotate={-15} opacity={0.4} />
+      <Vine className="absolute bottom-0 right-0 hidden sm:block" size={90} rotate={-5} opacity={0.35} />
 
       <div className="relative max-w-xl mx-auto text-center">
         <p className="font-script text-3xl text-primary">presença</p>

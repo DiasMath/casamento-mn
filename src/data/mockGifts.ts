@@ -64,6 +64,3 @@ export const mockGifts: Gift[] = [
     raised: 380,
   },
 ];
-
-export const WEDDING_DATE = new Date("2026-11-14T16:00:00");
-export const COUPLE = { bride: "Helena", groom: "Mateus" };

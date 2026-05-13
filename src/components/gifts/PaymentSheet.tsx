@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, QrCode, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
+import { PIX_KEY } from "@/lib/constants";
 import type { Gift } from "@/data/mockGifts";
-
-const PIX_KEY = "helena-mateus@casamento.com";
 
 export function PaymentSheet({
   gift,
@@ -54,10 +53,16 @@ export function PaymentSheet({
       >
         <SheetHeader className="text-left">
           <SheetTitle className="font-script text-3xl">Presentear</SheetTitle>
-          <SheetDescription>{gift.title}</SheetDescription>
         </SheetHeader>
 
         <div className="px-4 pb-6 space-y-6">
+          <div className="flex items-center gap-3 bg-secondary/60 rounded-2xl p-4">
+            <img src={gift.image} alt={gift.title} className="w-16 h-16 rounded-lg object-cover" />
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground">Presentear</p>
+              <p className="text-base font-medium">{gift.title}</p>
+            </div>
+          </div>
           <div className="bg-secondary/60 rounded-2xl p-4">
             <p className="text-xs text-muted-foreground">Falta arrecadar</p>
             <p className="text-2xl font-semibold">{brl(remaining)}</p>
@@ -87,11 +92,11 @@ export function PaymentSheet({
             </TabsList>
 
             <TabsContent value="pix" className="mt-4 space-y-4">
-              <div className="aspect-square max-w-[180px] mx-auto bg-pastel-gradient rounded-2xl flex items-center justify-center border border-border">
-                <QrCode className="w-24 h-24 text-foreground/70" strokeWidth={1.2} />
-              </div>
-              <div className="bg-secondary rounded-xl p-3 flex items-center justify-between gap-2">
-                <span className="text-sm truncate">{PIX_KEY}</span>
+              <div className="bg-secondary rounded-xl p-4 flex items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">Chave PIX</span>
+                  <span className="text-sm font-medium">{PIX_KEY}</span>
+                </div>
                 <Button size="sm" variant="ghost" onClick={copyPix} className="shrink-0">
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>

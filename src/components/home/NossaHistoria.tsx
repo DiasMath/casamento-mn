@@ -2,7 +2,7 @@ import s1 from "@/assets/story-1.jpg";
 import s2 from "@/assets/story-2.jpg";
 import s3 from "@/assets/story-3.jpg";
 import s4 from "@/assets/story-4.jpg";
-import { Flower, Sprig } from "@/components/decor/Flower";
+import { Flower, Branch, Vine } from "@/components/decor/Flower";
 
 interface Chapter {
   eyebrow: string;
@@ -44,11 +44,19 @@ const chapters: Chapter[] = [
 
 export function NossaHistoria() {
   return (
-    <section id="historia" className="relative px-4 py-20 sm:py-28 bg-secondary/40 overflow-hidden">
-      <Flower className="absolute -top-6 -left-6 hidden sm:block" size={120} variant="yellow" rotate={-20} opacity={0.45} />
-      <Flower className="absolute top-20 right-4 sm:right-10" size={70} variant="blue" rotate={25} opacity={0.55} />
-      <Sprig className="absolute bottom-10 left-6 hidden sm:block" size={140} rotate={20} opacity={0.45} />
-      <Flower className="absolute bottom-6 right-6" size={56} variant="mixed" rotate={45} opacity={0.5} />
+    <section id="historia" className="relative px-4 py-20 sm:py-28 bg-secondary/40 overflow-hidden" style={{ scrollMarginTop: "80px" }}>
+      <Branch className="absolute -top-4 -left-8 hidden sm:block" size={160} rotate={-10} opacity={0.4} />
+      <Vine className="absolute top-0 -left-4 hidden sm:block" size={140} rotate={5} opacity={0.35} />
+      <Flower className="absolute -top-2 -left-2 hidden sm:block" size={90} variant="yellow" rotate={-25} opacity={0.5} />
+      <Flower className="absolute top-16 right-2 sm:right-6" size={65} variant="blue" rotate={20} opacity={0.55} />
+      <Flower className="absolute top-32 right-16 hidden sm:block" size={45} variant="mixed" rotate={35} opacity={0.45} />
+      <Flower className="absolute top-6 left-12 hidden sm:block" size={40} variant="blue" rotate={-15} opacity={0.4} />
+      <Branch className="absolute top-0 right-0 hidden sm:block" size={140} rotate={160} opacity={0.35} />
+      <Vine className="absolute -top-8 right-8 hidden sm:block" size={100} rotate={-5} opacity={0.3} />
+      <Flower className="absolute bottom-16 left-4 sm:left-12" size={55} variant="mixed" rotate={-30} opacity={0.5} />
+      <Flower className="absolute bottom-8 right-8" size={70} variant="yellow" rotate={40} opacity={0.55} />
+      <Branch className="absolute -bottom-4 -right-4 hidden sm:block" size={150} rotate={175} opacity={0.4} />
+      <Vine className="absolute bottom-0 right-0 hidden sm:block" size={120} rotate={-15} opacity={0.35} />
 
       <div className="relative max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">

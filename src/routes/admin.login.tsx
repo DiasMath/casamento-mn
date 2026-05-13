@@ -1,28 +1,42 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Heart, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useViewMode } from "@/contexts/ViewModeContext";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/login")({
-  head: () => ({ meta: [{ title: "Login Admin — Helena & Mateus" }] }),
-  component: AdminLogin,
-});
-
-function AdminLogin() {
+export function AdminLogin() {
   const navigate = useNavigate();
-  const { setMode } = useViewMode();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  if (user?.email === ADMIN_EMAIL) {
+    navigate("/admin/painel");
+    return null;
+  }
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMode("admin");
-    toast.success("Bem-vindo(a) ao painel!");
-    navigate({ to: "/admin/painel" });
+    setLoading(true);
+
+    try {
+      if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+        throw new Error("Credenciais inválidas");
+      }
+
+      await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Bem-vindo(a) ao painel!");
+      navigate("/admin/painel");
+    } catch (error) {
+      toast.error("E-mail ou senha incorretos");
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,8 +75,12 @@ function AdminLogin() {
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90">
-            Entrar
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90"
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
 

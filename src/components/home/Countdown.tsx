@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { WEDDING_DATE } from "@/data/mockGifts";
+import { WEDDING_DATE } from "@/lib/constants";
 
 function diff() {
   const ms = Math.max(0, WEDDING_DATE.getTime() - Date.now());

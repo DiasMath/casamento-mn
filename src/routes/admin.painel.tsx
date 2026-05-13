@@ -1,15 +1,32 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { SiteLayout } from "@/components/layout/SiteLayout";
-import { Gift, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Gift, TrendingUp, Users, ArrowRight, LogOut } from "lucide-react";
 import { mockGifts } from "@/data/mockGifts";
 import { brl } from "@/lib/format";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/admin/painel")({
-  head: () => ({ meta: [{ title: "Painel — Helena & Mateus" }] }),
-  component: AdminPainel,
-});
+export function AdminPainel() {
+  const { user, isAdmin, loading, logout } = useAuth();
+  const navigate = useNavigate();
 
-function AdminPainel() {
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      navigate("/admin/login");
+    }
+  }, [loading, isAdmin, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
+
   const totalRaised = mockGifts.reduce((s, g) => s + g.raised, 0);
   const totalValue = mockGifts.reduce((s, g) => s + g.total, 0);
   const completed = mockGifts.filter((g) => g.raised >= g.total).length;
@@ -56,7 +73,7 @@ function AdminPainel() {
 
         <div className="mt-8 bg-card rounded-2xl border border-border/60 shadow-[var(--shadow-card)] overflow-hidden">
           <div className="px-5 py-4 border-b border-border bg-secondary/40">
-            <h2 className="font-medium">Últimas contribuições (mock)</h2>
+            <h2 className="font-medium">Últimas contribuições</h2>
           </div>
           <ul className="divide-y divide-border">
             {mockGifts.slice(0, 5).map((g, i) => (

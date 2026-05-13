@@ -19,8 +19,8 @@ export function GiftCard({ gift }: { gift: Gift }) {
 
   return (
     <>
-      <div className="group bg-card rounded-3xl overflow-hidden border border-border/60 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-soft)] transition-all duration-300 flex flex-col">
-        <div className="relative aspect-square overflow-hidden bg-secondary">
+      <div className="group bg-card rounded-2xl overflow-hidden border border-border/60 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-soft)] transition-all duration-300 flex flex-col">
+        <div className="relative aspect-video overflow-hidden bg-secondary flex items-center justify-center">
           <img
             src={gift.image}
             alt={gift.title}
@@ -29,11 +29,11 @@ export function GiftCard({ gift }: { gift: Gift }) {
           />
           {completed && (
             <div
-              className="absolute inset-0 flex items-center justify-center backdrop-blur-md"
-              style={{ backgroundColor: "color-mix(in oklab, var(--success) 55%, transparent)" }}
+              className="absolute inset-0 flex items-center justify-center backdrop-blur-[2px]"
+              style={{ backgroundColor: "color-mix(in oklab, var(--success) 25%, transparent)" }}
             >
-              <div className="w-20 h-20 rounded-full bg-card/90 flex items-center justify-center shadow-lg">
-                <Check className="w-10 h-10 text-[oklch(0.45_0.15_155)]" strokeWidth={3} />
+              <div className="w-16 h-16 rounded-full bg-card/90 flex items-center justify-center shadow-lg">
+                <Check className="w-8 h-8 text-[oklch(0.45_0.15_155)]" strokeWidth={3} />
               </div>
             </div>
           )}
@@ -57,25 +57,25 @@ export function GiftCard({ gift }: { gift: Gift }) {
           )}
         </div>
 
-        <div className="p-4 sm:p-5 flex flex-col flex-1 gap-3">
-          <h3 className="font-medium text-foreground line-clamp-2 min-h-[3rem]">{gift.title}</h3>
+        <div className="p-3 flex flex-col flex-1 gap-2">
+          <h3 className="text-sm font-medium text-foreground line-clamp-2">{gift.title}</h3>
           <div>
-            <Progress value={pct} className="h-2" />
-            <div className="mt-2 flex items-baseline justify-between text-xs text-muted-foreground">
+            <Progress value={pct} className="h-1.5" />
+            <div className="mt-1 flex items-baseline justify-between text-xs text-muted-foreground">
               <span>
-                <span className="font-medium text-foreground">{brl(gift.raised)}</span> de {brl(gift.total)}
+                <span className="font-medium text-foreground text-xs">{brl(gift.raised)}</span>
               </span>
               <span>{pct}%</span>
             </div>
           </div>
           {completed ? (
-            <Button disabled className="w-full rounded-full mt-auto" variant="secondary">
-              <Check className="w-4 h-4 mr-2" /> Presente Garantido!
+            <Button disabled className="w-full rounded-full mt-auto text-xs h-7" variant="secondary">
+              <Check className="w-3 h-3 mr-1" />
             </Button>
           ) : (
             <Button
               onClick={() => setOpen(true)}
-              className="w-full rounded-full mt-auto bg-primary text-primary-foreground hover:opacity-90"
+              className="w-full rounded-full mt-auto bg-primary text-primary-foreground hover:opacity-90 text-xs h-7 pb-2"
             >
               Presentear
             </Button>

@@ -1,16 +1,56 @@
-import { QueryClient } from "@tanstack/react-query";
-import { createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
+import { createBrowserRouter, RouterProvider, Outlet, Link } from "react-router-dom";
 
-export const getRouter = () => {
-  const queryClient = new QueryClient();
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ViewModeProvider } from "@/contexts/ViewModeContext";
+import { Toaster } from "@/components/ui/sonner";
 
-  const router = createRouter({
-    routeTree,
-    context: { queryClient },
-    scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-  });
+import { Index } from "./routes/index";
+import { ChaDePanela } from "./routes/cha-de-panela";
+import { AdminLogin } from "./routes/admin.login";
+import { AdminPainel } from "./routes/admin.painel";
 
-  return router;
-};
+export const queryClient = new QueryClient();
+
+function AppLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ViewModeProvider>
+        <Outlet />
+        <Toaster position="top-center" />
+      </ViewModeProvider>
+    </QueryClientProvider>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          A página que você procura não existe.
+        </p>
+        <div className="mt-6">
+          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+            Voltar ao início
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AppLayout />,
+    children: [
+      { path: "/", element: <Index /> },
+      { path: "/cha-de-panela", element: <ChaDePanela /> },
+      { path: "/admin/login", element: <AdminLogin /> },
+      { path: "/admin/painel", element: <AdminPainel /> },
+    ],
+  },
+  { path: "*", element: <NotFound /> },
+]);

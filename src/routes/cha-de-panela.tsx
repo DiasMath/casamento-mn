@@ -1,21 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { GiftCard } from "@/components/gifts/GiftCard";
 import { AddGiftFAB } from "@/components/gifts/AddGiftFAB";
 import { mockGifts } from "@/data/mockGifts";
 import { useViewMode } from "@/contexts/ViewModeContext";
 
-export const Route = createFileRoute("/cha-de-panela")({
-  head: () => ({
-    meta: [
-      { title: "Chá de Panela — Helena & Mateus" },
-      { name: "description", content: "Lista de presentes do nosso chá de panela." },
-    ],
-  }),
-  component: ChaDePanela,
-});
-
-function ChaDePanela() {
+export function ChaDePanela() {
   const { mode } = useViewMode();
   return (
     <SiteLayout>
@@ -25,7 +14,7 @@ function ChaDePanela() {
           <h1 className="text-3xl sm:text-4xl font-semibold mt-2">Lista de Presentes</h1>
           <p className="mt-4 text-foreground/70 max-w-xl mx-auto">
             Cada presente tem um valor total — você pode contribuir com a quantia que quiser. Quando a barra
-            atinge 100%, ele está garantido. Obrigado pelo carinho! 💛
+            atinge 100%, ele está garantido. Obrigado pelo carinho!
           </p>
         </div>
       </section>
