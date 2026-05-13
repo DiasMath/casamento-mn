@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import { Index } from "./routes/index";
-import { ChaDePanela } from "./routes/cha-de-panela";
+import { PresentList } from "./routes/present-list";
 import { AdminLogin } from "./routes/admin.login";
 import { AdminPainel } from "./routes/admin.painel";
 
@@ -47,7 +47,7 @@ createRoot(rootElement).render(
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Index />} />
-          <Route path="/cha-de-panela" element={<ChaDePanela />} />
+          <Route path="/present-list" element={<PresentList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/painel" element={<AdminPainel />} />
         </Route>

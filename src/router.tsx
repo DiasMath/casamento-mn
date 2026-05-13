@@ -5,7 +5,7 @@ import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import { Index } from "./routes/index";
-import { ChaDePanela } from "./routes/cha-de-panela";
+import { PresentList } from "./routes/present-list";
 import { AdminLogin } from "./routes/admin.login";
 import { AdminPainel } from "./routes/admin.painel";
 
@@ -47,7 +47,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: "/", element: <Index /> },
-      { path: "/cha-de-panela", element: <ChaDePanela /> },
+      { path: "/present-list", element: <PresentList /> },
       { path: "/admin/login", element: <AdminLogin /> },
       { path: "/admin/painel", element: <AdminPainel /> },
     ],

@@ -50,7 +50,7 @@ export function Navbar() {
 
         <div className="md:hidden flex items-center gap-2">
           <Link
-            to="/cha-de-panela"
+            to="/present-list"
             className="px-3 py-1.5 text-xs font-medium rounded-full bg-accent text-accent-foreground"
           >
             Chá
@@ -79,7 +79,7 @@ export function Navbar() {
                   </a>
                 ))}
                 <Link
-                  to="/cha-de-panela"
+                  to="/present-list"
                   onClick={() => setOpen(false)}
                   className="mt-2 px-4 py-3 text-center rounded-xl text-foreground font-medium"
                 >

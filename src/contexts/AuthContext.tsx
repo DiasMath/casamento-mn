@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth"; // Importamos o signOut estaticamente
 import { auth, ADMIN_EMAIL } from "@/lib/firebase";
-import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   user: User | null;
@@ -21,24 +20,33 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+
+  // Removido o useNavigate daqui, pois não era usado e poderia causar conflitos
 
   const logout = useCallback(async () => {
     try {
-      const { signOut } = await import("firebase/auth");
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth); // Usamos a função estática
+      }
     } catch (error) {
       console.error("Logout error:", error);
     }
-  }, [auth]);
+  }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Garantimos que não quebra caso o Firebase falhe na inicialização
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
     });
+    
     return unsubscribe;
-  }, [auth]);
+  }, []);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 

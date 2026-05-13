@@ -6,7 +6,6 @@ import { OndeVaiSer } from "@/components/home/OndeVaiSer";
 import { RSVP } from "@/components/home/RSVP";
 import { Recados } from "@/components/home/Recados";
 import { GiftCard } from "@/components/gifts/GiftCard";
-import { mockGifts } from "@/data/mockGifts";
 import { Link } from "react-router-dom";
 
 export function Index() {
@@ -26,14 +25,8 @@ export function Index() {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto pr-2">
-          {mockGifts.map((g) => (
-            <GiftCard key={g.id} gift={g} />
-          ))}
-        </div>
-
         <div className="text-center mt-6">
-          <Link to="/cha-de-panela" className="text-sm text-primary hover:underline">
+          <Link to="/present-list" className="text-sm text-primary hover:underline">
             Ver todos os presentes →
           </Link>
         </div>
