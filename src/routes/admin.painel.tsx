@@ -4,18 +4,21 @@ import {
   TrendingUp, 
   Users, 
   CheckCircle, 
-  Calendar, 
   ArrowRight, 
   Gift as GiftIcon, 
   PackageCheck,
   Tag,
-  ArrowLeft
+  ArrowLeft,
+  Wallet,
+  Timer,
+  Hourglass
 } from "lucide-react";
 import { getGifts, Gift, getRSVPs, RSVP } from "../lib/firestoreService";
 import { brl } from "@/lib/format";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { WEDDING_DATE } from "@/lib/constants";
 
 export function AdminPainel() {
   const { isAdmin, loading } = useAuth(); 
@@ -68,21 +71,33 @@ export function AdminPainel() {
     );
   }
 
-  // Métricas de Presentes
+  // Cálculos de Presentes
   const totalRaised = gifts.reduce((s, g) => s + g.raised, 0);
   const totalGoal = gifts.reduce((s, g) => s + g.total, 0);
-  const guaranteedGifts = gifts.filter((g) => g.raised >= g.total).length;
-  
-  // Cálculo da % da meta total
+  const remainingValue = Math.max(0, totalGoal - totalRaised);
   const overallPct = totalGoal > 0 ? Math.min(100, Math.round((totalRaised / totalGoal) * 100)) : 0;
+
+  const guaranteedGifts = gifts.filter((g) => g.raised >= g.total).length;
+  const giftsInProgress = gifts.filter((g) => g.raised > 0 && g.raised < g.total).length;
+  
+  // Cálculo de dias para o casamento
+  const diffTime = new Date(WEDDING_DATE).getTime() - new Date().getTime();
+  const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   // Métricas de RSVP
   const totalPeopleConfirmed = rsvps.reduce((s, r) => s + (Number(r.guestsCount) || 1), 0);
 
   const stats = [
-    { label: "Total Arrecadado", value: brl(totalRaised), icon: TrendingUp, showPct: true },
     { label: "Meta da Lista", value: brl(totalGoal), icon: GiftIcon },
-    { label: "Presentes Garantidos", value: `${guaranteedGifts} / ${gifts.length}`, icon: PackageCheck },
+    { label: "Total Arrecadado", value: brl(totalRaised), icon: TrendingUp, showPct: true },
+    { label: "Valor Restante", value: brl(remainingValue), icon: Wallet },
+    { 
+      label: "Status dos Presentes", 
+      value: `${gifts.length} Total`, 
+      icon: GiftIcon, 
+      subtext: `${guaranteedGifts} Concluídos • ${giftsInProgress} Em Andamento` 
+    },
+    { label: "Dias para o Casamento", value: `${daysUntil} dias`, icon: Hourglass },
     { label: "Total de Pessoas", value: totalPeopleConfirmed.toString(), icon: Users },
     { label: "Famílias/Grupos", value: rsvps.length.toString(), icon: CheckCircle },
   ];
@@ -104,16 +119,20 @@ export function AdminPainel() {
       {/* Grid de Estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((s) => (
-          <div key={s.label} className="bg-card p-5 rounded-2xl border border-border/60 shadow-sm flex flex-col justify-between h-full">
-            <div>
-              <div className="flex justify-between text-muted-foreground mb-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider">{s.label}</span>
-                <s.icon className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-xl font-bold">{s.value}</p>
+        <div key={s.label} className="bg-card p-5 rounded-2xl border border-border/60 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <div className="flex justify-between text-muted-foreground mb-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider leading-tight">{s.label}</span>
+              <s.icon className="w-4 h-4 text-primary shrink-0" />
             </div>
+            <p className="text-xl font-bold">{s.value}</p>
+            {s.subtext && (
+              <p className="text-[12px] text-muted-foreground mt-1 font-medium italic">
+                {s.subtext}
+              </p>
+            )}
+          </div>
             
-            {/* Barra de Progresso elegante e compacta */}
             {s.showPct && (
               <div className="mt-4">
                 <div className="flex justify-between items-center text-[10px] font-medium text-muted-foreground mb-1.5">
@@ -185,7 +204,7 @@ export function AdminPainel() {
         <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-secondary/10 flex justify-between items-center">
             <h2 className="font-semibold text-lg text-primary flex items-center gap-2">
-              <Users className="w-5 h-5" /> Confirmações (RSVP)
+              <Users className="w-5 h-5" /> Confirmações
             </h2>
           </div>
           <div className="max-h-[400px] overflow-y-auto">
