@@ -8,7 +8,10 @@ import {
   deleteDoc, 
   query, 
   orderBy,
-  DocumentData
+  DocumentData,
+  serverTimestamp,
+  Timestamp,
+  increment
 } from "firebase/firestore";
 
 export interface Gift {
@@ -26,6 +29,13 @@ export interface RSVP {
   email?: string;
   guestsCount: number; // Total de pessoas (incluindo quem confirmou)
   confirmedAt: any;    // Timestamp do Firestore
+}
+
+export interface Message {
+  id: string;
+  name: string;
+  text: string;
+  createdAt: Timestamp;
 }
 
 /**
@@ -109,3 +119,54 @@ export const getRSVPs = async (): Promise<RSVP[]> => {
     } as RSVP;
   });
 };
+
+/**
+ * Puxa todos os recados ordenados pelos mais recentes
+ */
+export const getMessages = async (): Promise<Message[]> => {
+  const msgCol = collection(getDb(), "messages");
+  const msgSnap = await getDocs(query(msgCol, orderBy("createdAt", "desc")));
+  
+  return msgSnap.docs.map(doc => {
+    const data = doc.data() as DocumentData;
+    return {
+      id: doc.id,
+      name: data.name,
+      text: data.text,
+      createdAt: data.createdAt
+    } as Message;
+  });
+};
+
+/**
+ * Adiciona um novo recado
+ */
+export const addMessage = async (name: string, text: string): Promise<string> => {
+  const msgCol = collection(getDb(), "messages");
+  const docRef = await addDoc(msgCol, {
+    name,
+    text,
+    createdAt: serverTimestamp()
+  });
+  return docRef.id;
+};
+
+export const registerContribution = async (giftId: string, value: number, contributorName: string) => {
+  const db = getDb();
+  
+  // 1. Registra a contribuição individual para o histórico
+  await addDoc(collection(db, "contributions"), {
+    giftId,
+    giftTitle: "", // opcional: salvar o título para facilitar a leitura no admin
+    contributorName: contributorName || "Anônimo",
+    value,
+    date: serverTimestamp()
+  });
+
+  // 2. Atualiza o valor total arrecadado no presente (Incremento)
+  const giftRef = doc(db, "gifts", giftId);
+  await updateDoc(giftRef, {
+    raised: increment(value)
+  });
+};
+

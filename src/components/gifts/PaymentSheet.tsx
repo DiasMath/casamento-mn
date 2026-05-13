@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
 import { PIX_KEY } from "@/lib/constants";
-import type { Gift } from "@/data/mockGifts";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
+import type { Gift } from "@/lib/firestoreService";
 
 export function PaymentSheet({
   gift,
@@ -22,11 +24,16 @@ export function PaymentSheet({
 }) {
   const remaining = Math.max(0, gift.total - gift.raised);
   const [amount, setAmount] = useState<string>("");
+  const [name, setName] = useState("");
   const [installments, setInstallments] = useState("1");
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open) setAmount(remaining.toString());
+    if (open) {
+      setAmount(remaining.toString());
+      setName("");
+    }
   }, [open, remaining]);
 
   const copyPix = async () => {
@@ -40,9 +47,39 @@ export function PaymentSheet({
     }
   };
 
-  const confirm = () => {
-    toast.success("Pagamento registrado! 💛", { description: `Obrigado por presentear ${gift.title}.` });
-    onOpenChange(false);
+  const confirm = async () => {
+    const value = parseFloat(amount);
+
+    if (isNaN(value) || value <= 0) {
+      toast.error("Por favor, insira um valor válido.");
+      return;
+    }
+
+    if (!db) {
+      toast.error("Erro de conexão com o servidor.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const giftRef = doc(db, "gifts", gift.id);
+      await updateDoc(giftRef, {
+        raised: increment(value)
+      });
+
+      const visitor = name.trim() ? name.trim() : "você";
+      toast.success("Pagamento registrado! 💛", { 
+        description: `Obrigado, ${visitor}, por presentear ${gift.title}.` 
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Erro ao processar:", error);
+      toast.error("Erro ao registrar contribuição");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,6 +103,17 @@ export function PaymentSheet({
           <div className="bg-secondary/60 rounded-2xl p-4">
             <p className="text-xs text-muted-foreground">Falta arrecadar</p>
             <p className="text-2xl font-semibold">{brl(remaining)}</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Seu Nome (Opcional)</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Queremos agradecer pessoalmente!"
+              className="rounded-xl"
+            />
           </div>
 
           <div>
@@ -130,9 +178,14 @@ export function PaymentSheet({
 
           <Button
             onClick={confirm}
+            disabled={loading || !amount}
             className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base"
           >
-            Confirmar contribuição
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Confirmar contribuição"
+            )}
           </Button>
         </div>
       </SheetContent>
