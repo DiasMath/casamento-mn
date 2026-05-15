@@ -24,7 +24,7 @@ export function Footer() {
       <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center gap-5 text-center">
         <Heart className="w-6 h-6 text-primary fill-primary/40" />
         <p className="font-script text-3xl">
-          {COUPLE.bride} & {COUPLE.groom}
+          {COUPLE.groom} & {COUPLE.bride}
         </p>
         <p className="text-sm text-muted-foreground max-w-md">
           Obrigado por fazer parte da nossa história. Mal podemos esperar para
