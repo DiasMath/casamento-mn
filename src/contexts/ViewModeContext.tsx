@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 type ViewMode = "guest" | "admin";
 
@@ -14,7 +20,8 @@ export function ViewModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ViewMode>("guest");
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("viewMode") : null;
+    const stored =
+      typeof window !== "undefined" ? localStorage.getItem("viewMode") : null;
     if (stored === "admin" || stored === "guest") setMode(stored);
   }, []);
 
@@ -23,7 +30,13 @@ export function ViewModeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   return (
-    <ViewModeContext.Provider value={{ mode, setMode, toggle: () => setMode(mode === "guest" ? "admin" : "guest") }}>
+    <ViewModeContext.Provider
+      value={{
+        mode,
+        setMode,
+        toggle: () => setMode(mode === "guest" ? "admin" : "guest"),
+      }}
+    >
       {children}
     </ViewModeContext.Provider>
   );

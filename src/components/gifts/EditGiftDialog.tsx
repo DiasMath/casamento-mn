@@ -21,7 +21,12 @@ interface EditGiftDialogProps {
   onGiftUpdated: () => void | Promise<void>;
 }
 
-export function EditGiftDialog({ gift, open, onOpenChange, onGiftUpdated }: EditGiftDialogProps) {
+export function EditGiftDialog({
+  gift,
+  open,
+  onOpenChange,
+  onGiftUpdated,
+}: EditGiftDialogProps) {
   const [title, setTitle] = useState(gift.title);
   const [marca, setMarca] = useState(gift.marca || "");
   const [image, setImage] = useState(gift.image);
@@ -42,14 +47,15 @@ export function EditGiftDialog({ gift, open, onOpenChange, onGiftUpdated }: Edit
     e.preventDefault();
     try {
       // Usar a mesma validação centralizada!
-      const { validTitle, validImage, totalNum, raisedNum, validMarca } = validateGiftData(title, image, total, raised, marca);;
+      const { validTitle, validImage, totalNum, raisedNum, validMarca } =
+        validateGiftData(title, image, total, raised, marca);
 
       await updateGift(gift.id, {
         title: validTitle,
         marca: validMarca,
         image: validImage,
         total: totalNum,
-        raised: raisedNum
+        raised: raisedNum,
       });
 
       toast.success("Presente atualizado!");
@@ -65,8 +71,12 @@ export function EditGiftDialog({ gift, open, onOpenChange, onGiftUpdated }: Edit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-script text-3xl">Editar presente</DialogTitle>
-          <DialogDescription>Atualize as informações do item.</DialogDescription>
+          <DialogTitle className="font-script text-3xl">
+            Editar presente
+          </DialogTitle>
+          <DialogDescription>
+            Atualize as informações do item.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={save} className="space-y-4">
           <div className="aspect-video rounded-2xl overflow-hidden bg-secondary">
@@ -74,31 +84,75 @@ export function EditGiftDialog({ gift, open, onOpenChange, onGiftUpdated }: Edit
           </div>
           <div>
             <Label htmlFor="g-title">Nome</Label>
-            <Input id="g-title" value={title} onChange={(e) => setTitle(e.target.value)} className="h-11 rounded-xl mt-1.5" required />
+            <Input
+              id="g-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="h-11 rounded-xl mt-1.5"
+              required
+            />
           </div>
           <div>
             <Label htmlFor="g-marca">Marca (Opcional)</Label>
-            <Input id="g-marca" value={marca} onChange={(e) => setMarca(e.target.value)} className="h-11 rounded-xl mt-1.5" placeholder="Ex: Tramontina" />
+            <Input
+              id="g-marca"
+              value={marca}
+              onChange={(e) => setMarca(e.target.value)}
+              className="h-11 rounded-xl mt-1.5"
+              placeholder="Ex: Tramontina"
+            />
           </div>
           <div>
             <Label htmlFor="g-image">URL da imagem</Label>
-            <Input id="g-image" value={image} onChange={(e) => setImage(e.target.value)} className="h-11 rounded-xl mt-1.5" required />
+            <Input
+              id="g-image"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              className="h-11 rounded-xl mt-1.5"
+              required
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="g-total">Valor total (R$)</Label>
-              <Input id="g-total" type="number" min={1} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} className="h-11 rounded-xl mt-1.5" required />
+              <Input
+                id="g-total"
+                type="number"
+                min={1}
+                step="0.01"
+                value={total}
+                onChange={(e) => setTotal(e.target.value)}
+                className="h-11 rounded-xl mt-1.5"
+                required
+              />
             </div>
             <div>
               <Label htmlFor="g-raised">Arrecadado (R$)</Label>
-              <Input id="g-raised" type="number" min={0} step="0.01" value={raised} onChange={(e) => setRaised(e.target.value)} className="h-11 rounded-xl mt-1.5" required />
+              <Input
+                id="g-raised"
+                type="number"
+                min={0}
+                step="0.01"
+                value={raised}
+                onChange={(e) => setRaised(e.target.value)}
+                className="h-11 rounded-xl mt-1.5"
+                required
+              />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="rounded-full">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="rounded-full"
+            >
               Cancelar
             </Button>
-            <Button type="submit" className="rounded-full bg-primary text-primary-foreground hover:opacity-90">
+            <Button
+              type="submit"
+              className="rounded-full bg-primary text-primary-foreground hover:opacity-90"
+            >
               Salvar alterações
             </Button>
           </DialogFooter>

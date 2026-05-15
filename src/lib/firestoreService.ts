@@ -1,17 +1,17 @@
 import { db } from "./firebase";
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
   orderBy,
   DocumentData,
   serverTimestamp,
   Timestamp,
-  increment
+  increment,
 } from "firebase/firestore";
 
 export interface Gift {
@@ -28,7 +28,7 @@ export interface RSVP {
   name: string;
   email?: string;
   guestsCount: number; // Total de pessoas (incluindo quem confirmou)
-  confirmedAt: any;    // Timestamp do Firestore
+  confirmedAt: any; // Timestamp do Firestore
 }
 
 export interface Message {
@@ -44,7 +44,9 @@ export interface Message {
  */
 const getDb = () => {
   if (!db) {
-    throw new Error("Firestore not initialized. Verifique as variáveis de ambiente.");
+    throw new Error(
+      "Firestore not initialized. Verifique as variáveis de ambiente.",
+    );
   }
   return db;
 };
@@ -55,16 +57,16 @@ const getDb = () => {
 export const getGifts = async (): Promise<Gift[]> => {
   const giftsCol = collection(getDb(), "gifts");
   const giftSnap = await getDocs(query(giftsCol, orderBy("title")));
-  
-  return giftSnap.docs.map(doc => {
+
+  return giftSnap.docs.map((doc) => {
     const data = doc.data() as DocumentData;
     return {
       id: doc.id,
       title: data.title,
       marca: data.marca || "",
       image: data.image,
-      total: data.total,
-      raised: data.raised
+      total: Number(data.total) || 0,
+      raised: Number(data.raised) || 0,
     } as Gift;
   });
 };
@@ -79,7 +81,7 @@ export const addGift = async (gift: Omit<Gift, "id">): Promise<string> => {
     marca: gift.marca || "",
     image: gift.image,
     total: gift.total,
-    raised: gift.raised || 0
+    raised: gift.raised || 0,
   });
   return docRef.id;
 };
@@ -87,7 +89,10 @@ export const addGift = async (gift: Omit<Gift, "id">): Promise<string> => {
 /**
  * Atualiza um presente existente
  */
-export const updateGift = async (id: string, gift: Partial<Omit<Gift, "id">>): Promise<void> => {
+export const updateGift = async (
+  id: string,
+  gift: Partial<Omit<Gift, "id">>,
+): Promise<void> => {
   const giftRef = doc(getDb(), "gifts", id);
   await updateDoc(giftRef, gift);
 };
@@ -106,16 +111,18 @@ export const deleteGift = async (id: string): Promise<void> => {
 export const getRSVPs = async (): Promise<RSVP[]> => {
   const rsvpCol = collection(getDb(), "rsvps");
   // Ordena pelas confirmações mais recentes
-  const rsvpSnap = await getDocs(query(rsvpCol, orderBy("confirmedAt", "desc")));
-  
-  return rsvpSnap.docs.map(doc => {
+  const rsvpSnap = await getDocs(
+    query(rsvpCol, orderBy("confirmedAt", "desc")),
+  );
+
+  return rsvpSnap.docs.map((doc) => {
     const data = doc.data() as DocumentData;
     return {
       id: doc.id,
       name: data.name,
       email: data.email,
       guestsCount: Number(data.guestsCount) || 1,
-      confirmedAt: data.confirmedAt
+      confirmedAt: data.confirmedAt,
     } as RSVP;
   });
 };
@@ -126,14 +133,14 @@ export const getRSVPs = async (): Promise<RSVP[]> => {
 export const getMessages = async (): Promise<Message[]> => {
   const msgCol = collection(getDb(), "messages");
   const msgSnap = await getDocs(query(msgCol, orderBy("createdAt", "desc")));
-  
-  return msgSnap.docs.map(doc => {
+
+  return msgSnap.docs.map((doc) => {
     const data = doc.data() as DocumentData;
     return {
       id: doc.id,
       name: data.name,
       text: data.text,
-      createdAt: data.createdAt
+      createdAt: data.createdAt,
     } as Message;
   });
 };
@@ -141,32 +148,56 @@ export const getMessages = async (): Promise<Message[]> => {
 /**
  * Adiciona um novo recado
  */
-export const addMessage = async (name: string, text: string): Promise<string> => {
+export const addMessage = async (
+  name: string,
+  text: string,
+): Promise<string> => {
   const msgCol = collection(getDb(), "messages");
   const docRef = await addDoc(msgCol, {
     name,
     text,
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
   });
   return docRef.id;
 };
 
-export const registerContribution = async (giftId: string, value: number, contributorName: string) => {
+export const registerContribution = async (
+  giftId: string,
+  value: number,
+  contributorName: string,
+) => {
   const db = getDb();
-  
+
   // 1. Registra a contribuição individual para o histórico
   await addDoc(collection(db, "contributions"), {
     giftId,
     giftTitle: "", // opcional: salvar o título para facilitar a leitura no admin
     contributorName: contributorName || "Anônimo",
     value,
-    date: serverTimestamp()
+    date: serverTimestamp(),
   });
 
   // 2. Atualiza o valor total arrecadado no presente (Incremento)
   const giftRef = doc(db, "gifts", giftId);
   await updateDoc(giftRef, {
-    raised: increment(value)
+    raised: increment(value),
   });
 };
 
+/**
+ * Adiciona uma nova confirmação de presença (RSVP)
+ */
+export const addRSVP = async (
+  name: string,
+  phone: string,
+  guestsCount: number,
+): Promise<string> => {
+  const rsvpCol = collection(getDb(), "rsvps");
+  const docRef = await addDoc(rsvpCol, {
+    name: name.trim(),
+    phone: phone.trim(),
+    guestsCount: Number(guestsCount) || 1,
+    confirmedAt: serverTimestamp(),
+  });
+  return docRef.id;
+};

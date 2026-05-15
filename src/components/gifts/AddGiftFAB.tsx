@@ -30,8 +30,14 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { validTitle, validImage, totalNum, validMarca } = validateGiftData(title, image, total, undefined, marca);
-      
+      const { validTitle, validImage, totalNum, validMarca } = validateGiftData(
+        title,
+        image,
+        total,
+        undefined,
+        marca,
+      );
+
       await addGift({
         title: validTitle,
         marca: validMarca,
@@ -67,26 +73,56 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="font-script text-3xl">Novo Presente</DialogTitle>
+          <DialogTitle className="font-script text-3xl">
+            Novo Presente
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleAdd} className="space-y-4">
           <div>
             <Label htmlFor="title">Título</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex: Jogo de Pratos" />
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="Ex: Jogo de Pratos"
+            />
           </div>
           <div>
             <Label htmlFor="marca">Marca (Opcional)</Label>
-            <Input id="marca" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Ex: Tramontina, Oster..." />
+            <Input
+              id="marca"
+              value={marca}
+              onChange={(e) => setMarca(e.target.value)}
+              placeholder="Ex: Tramontina, Oster..."
+            />
           </div>
           <div>
             <Label htmlFor="image">URL da Imagem</Label>
-            <Input id="image" value={image} onChange={(e) => setImage(e.target.value)} required placeholder="https://..." />
+            <Input
+              id="image"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              required
+              placeholder="https://..."
+            />
           </div>
           <div>
             <Label htmlFor="total">Valor Total (R$)</Label>
-            <Input id="total" type="number" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required />
+            <Input
+              id="total"
+              type="number"
+              step="0.01"
+              value={total}
+              onChange={(e) => setTotal(e.target.value)}
+              required
+            />
           </div>
-          <Button type="submit" className="w-full rounded-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full rounded-full"
+            disabled={loading}
+          >
             {loading ? "Salvando..." : "Adicionar à Lista"}
           </Button>
         </form>

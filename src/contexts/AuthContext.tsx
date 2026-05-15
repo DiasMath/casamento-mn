@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+  useCallback,
+} from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth"; // Importamos o signOut estaticamente
 import { auth, ADMIN_EMAIL } from "@/lib/firebase";
 
@@ -44,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
       setLoading(false);
     });
-    
+
     return unsubscribe;
   }, []);
 
@@ -54,12 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAdmin,
     loading,
-    logout
+    logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

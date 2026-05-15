@@ -1,59 +1,74 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { MercadoPagoConfig, Payment } from "mercadopago";
+
+// Criar o client uma única vez (melhor performance)
+const mpClient = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN || "",
+});
+const mpPayment = new Payment(mpClient);
+
+interface PaymentRequest {
+  amount: number;
+  description: string;
+  giftId: string;
+  payerName?: string;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido" });
   }
 
   try {
-    const { amount, description, giftId, payerName } = req.body;
+    const { amount, description, giftId, payerName } = req.body as PaymentRequest | undefined;
 
-    const client = new MercadoPagoConfig({ 
-      accessToken: process.env.MP_ACCESS_TOKEN || '' 
-    });
-
-    const payment = new Payment(client);
+    // Validar campos obrigatórios
+    if (!amount || amount <= 0 || !description || !giftId) {
+      return res.status(400).json({ error: "Parâmetros inválidos" });
+    }
 
     // 1. Identifica o host
-    const host = req.headers.host || req.headers['x-forwarded-host'] as string;
-    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
-    
-    const protocol = isLocal ? 'http' : 'https';
+    const host =
+      req.headers.host || (req.headers["x-forwarded-host"] as string);
+    const isLocal = host?.includes("localhost") || host?.includes("127.0.0.1");
+
+    const protocol = isLocal ? "http" : "https";
     const baseUrl = `${protocol}://${host}`;
 
     // 2. Monta o corpo da requisição
-    const body: any = {
+    const body = {
       transaction_amount: Number(amount),
       description: `Presente: ${description}`,
-      payment_method_id: 'pix',
+      payment_method_id: "pix",
       payer: {
-        email: 'convidado@casamento.com', 
-        first_name: payerName || 'Convidado',
+        email: "convidado@casamento.com",
+        first_name: payerName || "Convidado",
       },
       metadata: {
         gift_id: giftId,
-        contributor_name: payerName || 'Anônimo'
-      }
+        contributor_name: payerName || "Anônimo",
+      },
     };
 
     // 3. SÓ ADICIONA A URL DE NOTIFICAÇÃO SE NÃO FOR LOCALHOST
     // O Mercado Pago exige HTTPS e uma URL pública para aceitar o atributo
-    if (!isLocal) {
+    if (!isLocal && baseUrl.startsWith("https://")) {
       body.notification_url = `${baseUrl}/api/webhook`;
     }
 
-    const result = await payment.create({ body });
+    const result = await mpPayment.create({ body });
 
     return res.status(200).json({
       id: result.id,
       qr_code: result.point_of_interaction?.transaction_data?.qr_code,
-      qr_code_base64: result.point_of_interaction?.transaction_data?.qr_code_base64,
+      qr_code_base64:
+        result.point_of_interaction?.transaction_data?.qr_code_base64,
     });
-
-  } catch (error: any) {
-    console.error('Erro ao gerar PIX:', error);
-    // Retorna o erro detalhado para facilitar o seu debug
-    return res.status(error.status || 500).json(error);
+  } catch (error: unknown) {
+    console.error("Erro ao gerar PIX:", error);
+    const err = error as { status?: number; message?: string };
+    return res.status(err.status || 500).json({
+      error: err.message || "Erro ao gerar pagamento"
+    });
   }
 }

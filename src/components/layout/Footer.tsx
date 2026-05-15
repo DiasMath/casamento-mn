@@ -6,8 +6,20 @@ import { Flower } from "@/components/decor/Flower";
 export function Footer() {
   return (
     <footer className="relative border-t border-border overflow-hidden">
-      <Flower className="absolute -top-4 left-6" size={70} variant="yellow" rotate={20} opacity={0.45} />
-      <Flower className="absolute -bottom-4 right-6" size={90} variant="blue" rotate={-15} opacity={0.45} />
+      <Flower
+        className="absolute -top-4 left-6"
+        size={70}
+        variant="yellow"
+        rotate={20}
+        opacity={0.45}
+      />
+      <Flower
+        className="absolute -bottom-4 right-6"
+        size={90}
+        variant="blue"
+        rotate={-15}
+        opacity={0.45}
+      />
 
       <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center gap-5 text-center">
         <Heart className="w-6 h-6 text-primary fill-primary/40" />
@@ -15,7 +27,8 @@ export function Footer() {
           {COUPLE.bride} & {COUPLE.groom}
         </p>
         <p className="text-sm text-muted-foreground max-w-md">
-          Obrigado por fazer parte da nossa história. Mal podemos esperar para celebrar com você.
+          Obrigado por fazer parte da nossa história. Mal podemos esperar para
+          celebrar com você.
         </p>
         {/* "Feito com amor" — link secreto para o admin */}
         <Link

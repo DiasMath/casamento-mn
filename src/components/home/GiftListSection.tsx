@@ -28,24 +28,41 @@ export function GiftListSection() {
   }, []);
 
   return (
-    <section id="presentes" className="relative px-4 py-16 sm:py-24 bg-secondary/40 overflow-hidden" style={{ scrollMarginTop: "80px" }}>
+    <section
+      id="presentes"
+      className="relative px-4 py-16 sm:py-24 bg-secondary/40 overflow-hidden"
+      style={{ scrollMarginTop: "80px" }}
+    >
       {/* Decorações Visuais mantidas... */}
-      <Branch className="absolute -top-10 -right-10 hidden sm:block opacity-30" size={200} rotate={180} />
-      <Flower className="absolute top-20 left-10 opacity-40" size={60} variant="blue" rotate={45} />
+      <Branch
+        className="absolute -top-10 -right-10 hidden sm:block opacity-30"
+        size={200}
+        rotate={180}
+      />
+      <Flower
+        className="absolute top-20 left-10 opacity-40"
+        size={60}
+        variant="blue"
+        rotate={45}
+      />
 
       <div className="relative max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <p className="font-script text-3xl text-primary">presentes</p>
-          <h2 className="text-3xl sm:text-4xl font-semibold mt-2">Lista de Presentes</h2>
+          <h2 className="text-3xl sm:text-4xl font-semibold mt-2">
+            Lista de Presentes
+          </h2>
           <p className="mt-4 text-foreground/80 max-w-2xl mx-auto text-sm sm:text-base">
-            Sua presença é o nosso maior presente, mas se desejar nos presentear, 
-            escolhemos algumas opções com muito carinho.
+            Sua presença é o nosso maior presente, mas se desejar nos
+            presentear, escolhemos algumas opções com muito carinho.
           </p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <p className="text-muted-foreground text-sm animate-pulse">Carregando sugestões...</p>
+            <p className="text-muted-foreground text-sm animate-pulse">
+              Carregando sugestões...
+            </p>
           </div>
         ) : (
           <>
@@ -58,9 +75,13 @@ export function GiftListSection() {
             </div>
 
             <div className="mt-12 text-center">
-              <Button asChild size="lg" className="rounded-full px-8 gap-2 group text-sm">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full px-8 gap-2 group text-sm"
+              >
                 <Link to="/present-list">
-                  Ver lista completa 
+                  Ver lista completa
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>

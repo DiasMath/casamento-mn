@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import { Menu, Heart } from "lucide-react";
 import { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetHeader,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { COUPLE } from "@/lib/constants";
 
@@ -51,9 +57,9 @@ export function Navbar() {
         <div className="md:hidden flex items-center gap-2">
           <Link
             to="/present-list"
-            className="px-3 py-1.5 text-xs font-medium rounded-full bg-accent text-accent-foreground"
+            className="px-4 py-2 text-sm font-medium rounded-full bg-accent text-accent-foreground"
           >
-            Chá
+            Presentes
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -72,7 +78,10 @@ export function Navbar() {
                   <a
                     key={l.label}
                     href={`/#${l.hash}`}
-                    onClick={(e) => { setOpen(false); scrollToSection(e, l.hash); }}
+                    onClick={(e) => {
+                      setOpen(false);
+                      scrollToSection(e, l.hash);
+                    }}
                     className="px-4 py-3 rounded-xl hover:bg-secondary text-foreground text-left"
                   >
                     {l.label}

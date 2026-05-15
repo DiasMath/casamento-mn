@@ -3,45 +3,125 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
+import { addRSVP } from "@/lib/firestoreService";
 
 export function RSVP() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [companions, setCompanions] = useState("0");
   const [done, setDone] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDone(true);
-    toast.success("Presença confirmada! 💛", { description: `Obrigado, ${name.split(" ")[0]}.` });
-    setTimeout(() => {
-      setDone(false);
-      setName("");
-      setPhone("");
-      setCompanions("0");
-    }, 2500);
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const totalGuests = Number(companions) + 1; // +1 é a própria pessoa
+      await addRSVP(name.trim(), phone.trim(), totalGuests);
+
+      setDone(true);
+      toast.success("Presença confirmada! 💛", {
+        description: `Obrigado, ${name.split(" ")[0]}.`,
+      });
+      setTimeout(() => {
+        setDone(false);
+        setName("");
+        setPhone("");
+        setCompanions("0");
+      }, 3000);
+    } catch (error) {
+      console.error("Erro ao confirmar presença:", error);
+      toast.error("Erro ao confirmar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="rsvp" className="relative px-4 py-20 sm:py-28 overflow-hidden" style={{ scrollMarginTop: "80px" }}>
-      <Branch className="absolute -top-4 -right-8 hidden sm:block" size={140} rotate={140} opacity={0.4} />
-      <Flower className="absolute top-4 right-4 sm:right-8" size={75} variant="yellow" rotate={20} opacity={0.55} />
-      <Flower className="absolute top-16 right-16 hidden sm:block" size={45} variant="blue" rotate={-10} opacity={0.45} />
-      <Flower className="absolute top-8 left-8 hidden sm:block" size={50} variant="mixed" rotate={30} opacity={0.4} />
-      <Vine className="absolute top-0 left-0 hidden sm:block" size={100} rotate={5} opacity={0.35} />
-      <Branch className="absolute -bottom-4 -left-8 hidden sm:block" size={150} rotate={-10} opacity={0.4} />
-      <Flower className="absolute bottom-8 left-4 sm:left-8" size={85} variant="blue" rotate={-25} opacity={0.5} />
-      <Flower className="absolute bottom-20 left-16 hidden sm:block" size={40} variant="yellow" rotate={15} opacity={0.45} />
-      <Flower className="absolute bottom-12 right-6 hidden sm:block" size={55} variant="mixed" rotate={-15} opacity={0.4} />
-      <Vine className="absolute bottom-0 right-0 hidden sm:block" size={90} rotate={-5} opacity={0.35} />
+    <section
+      id="rsvp"
+      className="relative px-4 py-20 sm:py-28 overflow-hidden"
+      style={{ scrollMarginTop: "80px" }}
+    >
+      <Branch
+        className="absolute -top-4 -right-8 hidden sm:block"
+        size={140}
+        rotate={140}
+        opacity={0.4}
+      />
+      <Flower
+        className="absolute top-4 right-4 sm:right-8"
+        size={75}
+        variant="yellow"
+        rotate={20}
+        opacity={0.55}
+      />
+      <Flower
+        className="absolute top-16 right-16 hidden sm:block"
+        size={45}
+        variant="blue"
+        rotate={-10}
+        opacity={0.45}
+      />
+      <Flower
+        className="absolute top-8 left-8 hidden sm:block"
+        size={50}
+        variant="mixed"
+        rotate={30}
+        opacity={0.4}
+      />
+      <Vine
+        className="absolute top-0 left-0 hidden sm:block"
+        size={100}
+        rotate={5}
+        opacity={0.35}
+      />
+      <Branch
+        className="absolute -bottom-4 -left-8 hidden sm:block"
+        size={150}
+        rotate={-10}
+        opacity={0.4}
+      />
+      <Flower
+        className="absolute bottom-8 left-4 sm:left-8"
+        size={85}
+        variant="blue"
+        rotate={-25}
+        opacity={0.5}
+      />
+      <Flower
+        className="absolute bottom-20 left-16 hidden sm:block"
+        size={40}
+        variant="yellow"
+        rotate={15}
+        opacity={0.45}
+      />
+      <Flower
+        className="absolute bottom-12 right-6 hidden sm:block"
+        size={55}
+        variant="mixed"
+        rotate={-15}
+        opacity={0.4}
+      />
+      <Vine
+        className="absolute bottom-0 right-0 hidden sm:block"
+        size={90}
+        rotate={-5}
+        opacity={0.35}
+      />
 
       <div className="relative max-w-xl mx-auto text-center">
         <p className="font-script text-3xl text-primary">presença</p>
-        <h2 className="text-2xl sm:text-4xl font-semibold mt-2">Confirme sua presença</h2>
+        <h2 className="text-2xl sm:text-4xl font-semibold mt-2">
+          Confirme sua presença
+        </h2>
         <p className="mt-4 text-foreground/80">
-          Sua presença é o presente mais lindo. Nos avise se vai poder celebrar este dia com a gente.
+          Sua presença é o presente mais lindo. Nos avise se vai poder celebrar
+          este dia com a gente.
         </p>
 
         <form
@@ -85,10 +165,14 @@ export function RSVP() {
           </div>
           <Button
             type="submit"
-            disabled={done}
-            className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base"
+            disabled={done || isSubmitting}
+            className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base disabled:opacity-70"
           >
-            {done ? (
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...
+              </>
+            ) : done ? (
               <>
                 <Check className="w-4 h-4 mr-2" /> Presença confirmada
               </>

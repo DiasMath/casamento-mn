@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { brl } from "@/lib/format";
+import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Gift } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
@@ -19,9 +20,18 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [localGift, setLocalGift] = useState(gift);
 
-  const pct = Math.min(100, Math.round((gift.raised / gift.total) * 100));
-  const completed = gift.raised >= gift.total;
+  const pct = calculatePercentage(localGift.raised, localGift.total);
+  const completed = localGift.raised >= localGift.total;
+
+  const handlePaymentSuccess = (value: number) => {
+    setLocalGift((prev) => ({
+      ...prev,
+      raised: prev.raised + value,
+    }));
+    onUpdate();
+  };
 
   return (
     <>
@@ -29,18 +39,18 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
         {/* Botões de Ação (Apenas Admin) com Animações */}
         {isAdmin && (
           <div className="absolute top-2 right-2 z-10 flex gap-2">
-            <Button 
-              size="icon" 
-              variant="secondary" 
-              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 hover:bg-white hover:text-primary" 
+            <Button
+              size="icon"
+              variant="secondary"
+              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 hover:bg-white hover:text-primary"
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="w-4 h-4" />
             </Button>
-            <Button 
-              size="icon" 
-              variant="destructive" 
-              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95" 
+            <Button
+              size="icon"
+              variant="destructive"
+              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="w-4 h-4" />
@@ -49,42 +59,72 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
         )}
 
         <div className="aspect-video overflow-hidden bg-secondary">
-          <img src={gift.image} alt={gift.title} className="w-full h-full object-cover" />
+          <img
+            src={localGift.image}
+            alt={localGift.title}
+            className="w-full h-full object-cover"
+          />
         </div>
 
         <div className="p-4 flex flex-col flex-1 gap-3">
           {/* Título e Marca */}
           <div>
-            <h3 className="font-medium line-clamp-1">{gift.title}</h3>
-            {gift.marca && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{gift.marca}</p>
+            <h3 className="font-medium line-clamp-1">{localGift.title}</h3>
+            {localGift.marca && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                {localGift.marca}
+              </p>
             )}
           </div>
-          
+
           {/* BARRA DE PROGRESSO E VALORES ATUALIZADOS AQUI */}
           <div className="space-y-1">
             <Progress value={pct} className="h-1.5" />
             <div className="flex justify-between items-baseline text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{pct}%</span>
-              <span className="font-medium text-foreground">{brl(gift.total)}</span>
+              <span className="font-medium text-foreground">
+                {brl(localGift.total)}
+              </span>
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={() => setPayOpen(true)}
             disabled={completed}
             className="w-full rounded-full transition-transform active:scale-95"
             variant={completed ? "secondary" : "default"}
           >
-            {completed ? <><Check className="w-4 h-4 mr-2" /> Comprado</> : "Presentear"}
+            {completed ? (
+              <>
+                <Check className="w-4 h-4 mr-2" /> Comprado
+              </>
+            ) : (
+              "Presentear"
+            )}
           </Button>
         </div>
       </div>
 
       {/* Modais de CRUD e Pagamento */}
-      <EditGiftDialog gift={gift} open={editOpen} onOpenChange={setEditOpen} onGiftUpdated={onUpdate} />
-      <DeleteGiftDialog giftId={gift.id} giftTitle={gift.title} open={deleteOpen} onOpenChange={setDeleteOpen} onGiftDeleted={onUpdate} />
-      <PaymentSheet gift={gift} open={payOpen} onOpenChange={setPayOpen} />
+      <EditGiftDialog
+        gift={localGift}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onGiftUpdated={onUpdate}
+      />
+      <DeleteGiftDialog
+        giftId={localGift.id}
+        giftTitle={localGift.title}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onGiftDeleted={onUpdate}
+      />
+      <PaymentSheet
+        gift={localGift}
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </>
   );
 }

@@ -2,9 +2,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-console.log('Loading Firebase config...');
-console.log('API Key:', import.meta.env.VITE_FIREBASE_API_KEY ? 'present' : 'missing');
-console.log('Auth Domain:', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? 'present' : 'missing');
+console.log("Loading Firebase config...");
+console.log(
+  "API Key:",
+  import.meta.env.VITE_FIREBASE_API_KEY ? "present" : "missing",
+);
+console.log(
+  "Auth Domain:",
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? "present" : "missing",
+);
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,7 +22,7 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-console.log('Firebase config created');
+console.log("Firebase config created");
 
 let app;
 let authInstance;
@@ -24,18 +30,19 @@ let dbInstance;
 
 try {
   app = initializeApp(firebaseConfig);
-  console.log('Firebase app initialized');
+  console.log("Firebase app initialized");
   authInstance = getAuth(app);
   dbInstance = getFirestore(app);
-  console.log('Auth and DB initialized');
+  console.log("Auth and DB initialized");
 } catch (error) {
-  console.error('Firebase initialization error:', error);
+  console.error("Firebase initialization error:", error);
 }
 
 // Export the instances (may be undefined if initialization failed)
 export const auth = authInstance;
 export const db = dbInstance;
-export const PIX_KEY = import.meta.env.VITE_PIX_KEY || '';
+export const PIX_KEY = import.meta.env.VITE_PIX_KEY || "";
 
-export const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@casamento.com';
+export const ADMIN_EMAIL =
+  import.meta.env.VITE_ADMIN_EMAIL || "admin@casamento.com";
 // ADMIN_PASSWORD is no longer needed - we validate against Firebase Auth

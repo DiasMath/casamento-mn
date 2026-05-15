@@ -17,17 +17,23 @@ interface DeleteGiftDialogProps {
   giftTitle: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onGiftDeleted: () => void | Promise<void>; 
+  onGiftDeleted: () => void | Promise<void>;
 }
 
-export function DeleteGiftDialog({ giftId, giftTitle, open, onOpenChange, onGiftDeleted }: DeleteGiftDialogProps) {
+export function DeleteGiftDialog({
+  giftId,
+  giftTitle,
+  open,
+  onOpenChange,
+  onGiftDeleted,
+}: DeleteGiftDialogProps) {
   const confirm = async () => {
     try {
       await deleteGift(giftId); // 2. Usa o giftId
       toast.success("Presente excluído!", { description: giftTitle });
-      
+
       // 3. Informa o componente pai (AdminPainel) que terminou para atualizar a lista
-      await onGiftDeleted(); 
+      await onGiftDeleted();
     } catch (error: any) {
       console.error("Error deleting gift:", error);
       toast.error(error.message || "Erro ao excluir presente");
@@ -43,12 +49,19 @@ export function DeleteGiftDialog({ giftId, giftTitle, open, onOpenChange, onGift
           <AlertDialogTitle>Excluir presente?</AlertDialogTitle>
           <AlertDialogDescription>
             {/* 4. Usa o giftTitle */}
-            Tem certeza que deseja excluir <span className="font-medium text-foreground">{giftTitle}</span>? Essa ação não pode ser desfeita.
+            Tem certeza que deseja excluir{" "}
+            <span className="font-medium text-foreground">{giftTitle}</span>?
+            Essa ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-full">Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={confirm} className="rounded-full bg-destructive text-destructive-foreground hover:opacity-90">
+          <AlertDialogCancel className="rounded-full">
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirm}
+            className="rounded-full bg-destructive text-destructive-foreground hover:opacity-90"
+          >
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>

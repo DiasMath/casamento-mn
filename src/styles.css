@@ -37,7 +37,8 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-script: "Cormorant Garamond", "Playfair Display", serif;
 
-  --shadow-soft: 0 8px 30px -12px color-mix(in oklab, var(--primary) 25%, transparent);
+  --shadow-soft: 0 8px 30px -12px
+    color-mix(in oklab, var(--primary) 25%, transparent);
   --shadow-card: 0 4px 24px -8px oklch(0.7 0.02 240 / 0.18);
 }
 

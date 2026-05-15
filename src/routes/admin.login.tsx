@@ -36,22 +36,36 @@ export function AdminLogin() {
     e.preventDefault();
     setFormLoading(true);
 
+    if (!auth) {
+      toast.error("Erro de conexão. Tente novamente.");
+      setFormLoading(false);
+      return;
+    }
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+
       // Verify this is an admin user (checks against .env ADMIN_EMAIL)
       if (userCredential.user.email !== ADMIN_EMAIL) {
-        throw new Error("Acesso não autorizado - este e-mail não tem permissão de admin");
+        throw new Error(
+          "Acesso não autorizado - este e-mail não tem permissão de admin",
+        );
       }
 
       toast.success("Bem-vindo(a) ao painel!");
       // The redirect will happen via the useEffect above when user changes
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.code === "auth/invalid-email" || 
-          error.code === "auth/user-disabled" || 
-          error.code === "auth/user-not-found" ||
-          error.code === "auth/wrong-password") {
+      if (
+        error.code === "auth/invalid-email" ||
+        error.code === "auth/user-disabled" ||
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/wrong-password"
+      ) {
         toast.error("E-mail ou senha incorretos");
       } else {
         toast.error(error.message || "Erro ao fazer login. Tente novamente.");
@@ -63,9 +77,9 @@ export function AdminLogin() {
 
   // NOW WE CAN USE CONDITIONAL LOGIC FOR RETURN VALUES
   // (All hooks have been called, so this is safe)
-  
+
   let JSXtoReturn;
-  
+
   if (loading) {
     JSXtoReturn = (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -87,7 +101,9 @@ export function AdminLogin() {
               <Lock className="w-6 h-6 text-primary-foreground" />
             </div>
             <h1 className="font-script text-3xl mt-4">Painel Administrativo</h1>
-            <p className="text-sm text-muted-foreground mt-1">Entre para gerenciar a lista de presentes</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Entre para gerenciar a lista de presentes
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -124,7 +140,10 @@ export function AdminLogin() {
             </Button>
           </form>
 
-          <Link to="/" className="mt-6 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <Link
+            to="/"
+            className="mt-6 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
             <Heart className="w-3 h-3" /> voltar ao site
           </Link>
         </div>
