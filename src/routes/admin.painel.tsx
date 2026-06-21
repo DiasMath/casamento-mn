@@ -264,7 +264,7 @@ export function AdminPainel() {
                       ? "text-red-600 bg-red-50 border-red-200"
                       : (g.priority ?? "media") === "baixa"
                         ? "text-green-600 bg-green-50 border-green-200"
-                        : "text-yellow-600 bg-yellow-50 border-yellow-200";
+                        : "text-yellow-600 bg-yellow-200 border-yellow-200";
                   return (
                     <tr
                       key={g.id}
@@ -295,10 +295,10 @@ export function AdminPainel() {
                           <div
                             className={`absolute inset-y-0 left-0 rounded-full transition-all ${
                               pct >= 100
-                                ? "bg-green-500"
+                                ? "bg-green-200"
                                 : pct >= 50
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
+                                  ? "bg-yellow-200"
+                                  : "bg-red-200"
                             }`}
                             style={{ width: `${pct}%` }}
                           />
@@ -334,7 +334,7 @@ export function AdminPainel() {
                   ? "text-red-600 bg-red-50 border-red-200"
                   : (g.priority ?? "media") === "baixa"
                     ? "text-green-600 bg-green-50 border-green-200"
-                    : "text-yellow-600 bg-yellow-50 border-yellow-200";
+                    : "text-yellow-600 bg-yellow-200 border-yellow-200";
               return (
                 <div key={g.id} className="p-4 space-y-3">
                   <div>
@@ -359,10 +359,10 @@ export function AdminPainel() {
                     <div
                       className={`absolute inset-y-0 left-0 rounded-full transition-all ${
                         pct >= 100
-                          ? "bg-green-500"
+                          ? "bg-green-200"
                           : pct >= 50
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
+                            ? "bg-yellow-200"
+                            : "bg-red-200"
                       }`}
                       style={{ width: `${pct}%` }}
                     />

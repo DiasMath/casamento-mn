@@ -42,10 +42,10 @@ function ProgressBar({ pct }: { pct: number }) {
       <div
         className={`absolute inset-y-0 left-0 rounded-full transition-all ${
           pct >= 100
-            ? "bg-green-500"
+            ? "bg-green-200"
             : pct >= 50
-              ? "bg-yellow-500"
-              : "bg-red-500"
+              ? "bg-yellow-200"
+              : "bg-red-200"
         }`}
         style={{ width: `${pct}%` }}
       />

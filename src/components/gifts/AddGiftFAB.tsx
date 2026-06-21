@@ -56,6 +56,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
         image: validImage,
         total: totalNum,
         raised: 0,
+        hidden: false,
         category,
         priority,
       });
@@ -87,7 +88,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
           <Plus className="w-7 h-7" />
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md rounded-3xl">
+      <DialogContent className="sm:max-w-md rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-script text-3xl">
             Novo Presente

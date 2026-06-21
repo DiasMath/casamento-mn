@@ -111,10 +111,10 @@ export function PriorityStats({ gifts }: PriorityStatsProps) {
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all ${
                   d.pct >= 100
-                    ? "bg-green-500"
+                    ? "bg-green-200"
                     : d.pct >= 50
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
+                      ? "bg-yellow-200"
+                      : "bg-red-200"
                 }`}
                 style={{ width: `${d.pct}%` }}
               />

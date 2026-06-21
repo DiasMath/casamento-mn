@@ -60,32 +60,13 @@ export function Recados() {
 
     setIsSubmitting(true);
     try {
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage: Message = {
-        id: tempId,
-        name: name.trim(),
-        text: text.trim(),
-        createdAt: { toDate: () => new Date() } as any,
-      };
-
-      setMessages((prev) => [optimisticMessage, ...prev]);
+      await addMessage(name.trim(), text.trim());
       setName("");
       setText("");
-
-      const docId = await addMessage(
-        optimisticMessage.name,
-        optimisticMessage.text,
-      );
-
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, id: docId } : m)),
-      );
-
       toast.success("Recado enviado! 💛");
     } catch (error) {
       console.error("Erro ao enviar recado:", error);
       toast.error("Erro ao enviar. Tente novamente.");
-      setMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
     } finally {
       setIsSubmitting(false);
     }
@@ -136,37 +117,21 @@ export function Recados() {
           onSubmit={submit}
           className="max-w-2xl mx-auto bg-card rounded-3xl p-6 sm:p-8 border border-border/60 shadow-sm space-y-4 mb-16"
         >
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="r-name">Seu nome</Label>
-              <Input
-                id="r-name"
-                value={name}
-                onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
-                required
-                placeholder="Como se chama?"
-                className="h-11 rounded-xl mt-2"
-                disabled={isSubmitting}
-                maxLength={MAX_NAME}
-              />
-              <p className="text-[10px] text-muted-foreground mt-1 text-right">
-                {name.length}/{MAX_NAME}
-              </p>
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="submit"
-                className="w-full h-11 rounded-full bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-70"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                {isSubmitting ? "Enviando..." : "Enviar recado"}
-              </Button>
-            </div>
+          <div>
+            <Label htmlFor="r-name">Seu nome</Label>
+            <Input
+              id="r-name"
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
+              required
+              placeholder="Como se chama?"
+              className="h-11 rounded-xl mt-2"
+              disabled={isSubmitting}
+              maxLength={MAX_NAME}
+            />
+            <p className="text-[10px] text-muted-foreground mt-1 text-right">
+              {name.length}/{MAX_NAME}
+            </p>
           </div>
           <div>
             <Label htmlFor="r-text">Recado</Label>
@@ -185,6 +150,18 @@ export function Recados() {
               {text.length}/{MAX_TEXT}
             </p>
           </div>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-full bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-70"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {isSubmitting ? "Enviando..." : "Enviar recado"}
+          </Button>
         </form>
 
         {/* Área do carrossel */}

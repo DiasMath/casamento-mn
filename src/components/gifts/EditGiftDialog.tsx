@@ -89,7 +89,7 @@ export function EditGiftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl">
+      <DialogContent className="sm:max-w-md rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-script text-3xl">
             Editar presente
@@ -100,7 +100,7 @@ export function EditGiftDialog({
         </DialogHeader>
         <form onSubmit={save} className="space-y-4">
           <div>
-            <Label>Imagem do Presente</Label>
+            <Label>Imagem do Presente (Toque para Trocar)</Label>
             <ImageUploader value={image} onUpload={setImage} />
           </div>
           <div>

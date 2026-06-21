@@ -54,19 +54,19 @@ export function CropModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden max-h-[90vh]">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-script text-3xl">
             Recortar Imagem
           </DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full aspect-square bg-black">
+        <div className="relative w-full aspect-video bg-black">
           <Cropper
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
+            aspect={16 / 9}
             onCropChange={setCrop}
             onCropComplete={handleCropAreaChange}
             onZoomChange={setZoom}

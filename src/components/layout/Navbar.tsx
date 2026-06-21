@@ -21,6 +21,10 @@ const links = [
 
 function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, hash: string) {
   e.preventDefault();
+  if (window.location.pathname !== "/") {
+    window.location.href = `/#${hash}`;
+    return;
+  }
   const element = document.getElementById(hash);
   if (element) {
     element.scrollIntoView({ behavior: "smooth" });
