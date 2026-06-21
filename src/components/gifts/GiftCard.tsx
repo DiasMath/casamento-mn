@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Check, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical } from "lucide-react";
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const [payOpen, setPayOpen] = useState(false);
   const [localGift, setLocalGift] = useState(gift);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [simulating, setSimulating] = useState(false);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
@@ -35,6 +36,32 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
       raised: prev.raised + value,
     }));
     onUpdate();
+  };
+
+  const handleSimulatePayment = async () => {
+    const remaining = localGift.total - localGift.raised;
+    if (remaining <= 0) return;
+    const value = Math.min(remaining, 50);
+    setSimulating(true);
+    try {
+      const res = await fetch("/api/test-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          giftId: localGift.id,
+          amount: value,
+          contributorName: "Teste Admin",
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao simular");
+      toast.success(`Simulado: +R$ ${value.toFixed(2)} no presente`);
+      setLocalGift((prev) => ({ ...prev, raised: prev.raised + value }));
+      onUpdate();
+    } catch {
+      toast.error("Erro ao simular pagamento");
+    } finally {
+      setSimulating(false);
+    }
   };
 
   const handleToggleVisibility = async () => {
@@ -65,6 +92,18 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
         {/* Botões de Ação (Apenas Admin) com Animações */}
         {isAdmin && (
           <div className="absolute top-2 right-2 z-10 flex gap-2">
+            {!completed && (
+              <Button
+                size="icon"
+                variant="secondary"
+                className="w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 bg-blue-100 text-blue-600 hover:bg-blue-200"
+                onClick={handleSimulatePayment}
+                disabled={simulating}
+                title="Simular pagamento"
+              >
+                <FlaskConical className="w-5 h-5" />
+              </Button>
+            )}
             <Button
               size="icon"
               variant="secondary"
