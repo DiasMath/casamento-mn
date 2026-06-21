@@ -149,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // PIX pode ficar 'pending' antes de 'approved'
       const validStatuses = ["approved", "pending"];
 
-      if (!validStatuses.includes(paymentData.status)) {
+      if (!paymentData.status || !validStatuses.includes(paymentData.status)) {
         console.log("[Webhook] Status ignorado:", paymentData.status);
         return res.status(200).send("OK");
       }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChaLayout } from "@/components/layout/ChaLayout";
 import { GiftCard } from "@/components/gifts/GiftCard";
 import { AddGiftFAB } from "@/components/gifts/AddGiftFAB";
@@ -6,9 +7,11 @@ import { GiftFilters } from "@/components/gifts/GiftFilters";
 import type { GiftFiltersState } from "@/components/gifts/GiftFilters";
 import { getGifts, getVisibleGifts, Gift } from "@/lib/firestoreService";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function ChaDePanela() {
   const { isAdmin } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +37,21 @@ export function ChaDePanela() {
   useEffect(() => {
     fetchGifts();
   }, [fetchGifts, isAdmin]);
+
+  // Handle Mercado Pago payment return
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+    if (payment) {
+      if (payment === "success") {
+        toast.success("Pagamento confirmado! Obrigado pelo carinho!");
+      } else if (payment === "pending") {
+        toast.info("Pagamento pendente. Assim que for confirmado, atualizaremos a lista!");
+      } else if (payment === "failure") {
+        toast.error("Pagamento não foi concluído. Tente novamente.");
+      }
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const filteredGifts = useMemo(() => {
     return gifts.filter((g) => {

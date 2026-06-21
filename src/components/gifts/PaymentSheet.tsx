@@ -33,6 +33,7 @@ export function PaymentSheet({
   const [name, setName] = useState("");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cardLoading, setCardLoading] = useState(false);
 
   // Estados do fluxo do PIX
   const [step, setStep] = useState<"form" | "pix">("form");
@@ -50,7 +51,7 @@ export function PaymentSheet({
   // Limpa os estados ao abrir/fechar o modal
   useEffect(() => {
     if (open) {
-      setAmount(remaining.toString());
+      setAmount("");
       setName("");
       setStep("form");
       setPixData(null);
@@ -177,6 +178,37 @@ export function PaymentSheet({
     }
   };
 
+  const handleCardCheckout = async () => {
+    const value = parseFloat(amount);
+    if (isNaN(value) || value <= 0) {
+      toast.error("Insira um valor válido.");
+      return;
+    }
+
+    setCardLoading(true);
+    try {
+      const response = await fetch("/api/generate-card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: value,
+          description: gift.title,
+          giftId: gift.id,
+          payerName: name.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao criar checkout");
+
+      window.location.href = data.checkout_url;
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao redirecionar. Tente novamente.");
+      setCardLoading(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -239,8 +271,8 @@ export function PaymentSheet({
                 <TabsTrigger value="pix" className="rounded-full">
                   PIX
                 </TabsTrigger>
-                <TabsTrigger value="card" className="rounded-full" disabled>
-                  Cartão (Em breve)
+                <TabsTrigger value="card" className="rounded-full">
+                  Cartão
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="pix" className="mt-6">
@@ -257,6 +289,22 @@ export function PaymentSheet({
                     </>
                   )}
                 </Button>
+              </TabsContent>
+              <TabsContent value="card" className="mt-6">
+                <Button
+                  onClick={handleCardCheckout}
+                  disabled={cardLoading || !amount}
+                  className="w-full h-14 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-lg font-medium"
+                >
+                  {cardLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Pagar com Cartão"
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  Você será redirecionado para o Mercado Pago para pagar com segurança.
+                </p>
               </TabsContent>
             </Tabs>
           </div>
