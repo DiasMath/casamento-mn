@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -40,10 +40,17 @@ export function PaymentSheet({
     qr_code: string;
     qr_code_base64: string;
   } | null>(null);
-  const [expiresIn, setExpiresIn] = useState(900); // 15 minutos em segundos
+  const [expiresIn, setExpiresIn] = useState(900);
 
   // Estados de confirmação de pagamento
   const [isExpired, setIsExpired] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  // Ref para capturar gift.raised no momento que PIX é gerado
+  // Evita race condition: o prop muda quando pai re-renderiza
+  const raisedAtStart = useRef(gift.raised);
+  const onPaymentSuccessRef = useRef(onPaymentSuccess);
+  onPaymentSuccessRef.current = onPaymentSuccess;
 
   // Limpa os estados ao abrir/fechar o modal
   useEffect(() => {
@@ -54,8 +61,10 @@ export function PaymentSheet({
       setPixData(null);
       setExpiresIn(900);
       setIsExpired(false);
+      setPaymentId(null);
+      raisedAtStart.current = gift.raised;
     }
-  }, [open, remaining]);
+  }, [open, gift.raised]);
 
   // Função para voltar ao estado inicial
   const handleCancelPix = () => {
@@ -80,24 +89,51 @@ export function PaymentSheet({
   }, [step, expiresIn]);
 
   // ESCUTA EM TEMPO REAL: Detecta quando o valor no Firebase aumenta
+  // Usa ref para comparar com o valor original (quando PIX foi gerado)
   useEffect(() => {
     if (step !== "pix" || !gift.id || !db) return;
 
     const giftRef = doc(db, "gifts", gift.id);
     let called = false;
+    const initialRaised = raisedAtStart.current;
 
     const unsubscribe = onSnapshot(giftRef, (docSnap) => {
       if (docSnap.exists() && !called) {
         const data = docSnap.data();
-        if (data.raised > gift.raised) {
+        if (data.raised > initialRaised) {
           called = true;
-          onPaymentSuccess?.(data.raised - gift.raised);
+          onPaymentSuccessRef.current?.(data.raised - initialRaised);
         }
       }
     });
 
     return () => unsubscribe();
-  }, [step, gift.id, gift.raised, onPaymentSuccess]);
+  }, [step, gift.id]);
+
+  // POLLING FALLBACK: Checa status a cada 5s via API
+  useEffect(() => {
+    if (step !== "pix" || !paymentId) return;
+    let stopped = false;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/check-payment?id=${paymentId}`);
+        const data = await res.json();
+        if (data.status === "approved" && !stopped) {
+          // check-payment atualizou Firebase → onSnapshot vai detectar
+        }
+      } catch {
+        // Silencioso
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [step, paymentId]);
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);
@@ -143,6 +179,8 @@ export function PaymentSheet({
         qr_code: data.qr_code,
         qr_code_base64: `data:image/png;base64,${data.qr_code_base64}`,
       });
+      setPaymentId(String(data.id));
+      raisedAtStart.current = gift.raised;
       setStep("pix");
       toast.success("PIX gerado com sucesso!");
     } catch (error) {

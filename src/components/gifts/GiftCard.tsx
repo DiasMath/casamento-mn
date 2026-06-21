@@ -1,5 +1,5 @@
 import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,7 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
 
-  const handlePaymentSuccess = (value: number) => {
+  const handlePaymentSuccess = useCallback((value: number) => {
     setLocalGift((prev) => ({
       ...prev,
       raised: prev.raised + value,
@@ -42,7 +42,7 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
     setPayOpen(false);
     setThankYouOpen(true);
     onUpdate();
-  };
+  }, [onUpdate]);
 
   const handleSimulatePayment = async () => {
     const remaining = localGift.total - localGift.raised;
