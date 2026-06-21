@@ -10,9 +10,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { updateGift, Gift } from "@/lib/firestoreService"; // Usar a interface Gift existente
+import { updateGift, Gift } from "@/lib/firestoreService";
+import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
+import { ImageUploader } from "./ImageUploader";
+import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
 interface EditGiftDialogProps {
   gift: Gift;
@@ -32,6 +42,12 @@ export function EditGiftDialog({
   const [image, setImage] = useState(gift.image);
   const [total, setTotal] = useState(String(gift.total));
   const [raised, setRaised] = useState(String(gift.raised));
+  const [category, setCategory] = useState<GiftCategory>(
+    gift.category ?? "outros",
+  );
+  const [priority, setPriority] = useState<GiftPriority>(
+    gift.priority ?? "media",
+  );
 
   useEffect(() => {
     if (open) {
@@ -40,6 +56,8 @@ export function EditGiftDialog({
       setImage(gift.image);
       setTotal(String(gift.total));
       setRaised(String(gift.raised));
+      setCategory(gift.category ?? "outros");
+      setPriority(gift.priority ?? "media");
     }
   }, [open, gift]);
 
@@ -56,6 +74,8 @@ export function EditGiftDialog({
         image: validImage,
         total: totalNum,
         raised: raisedNum,
+        category,
+        priority,
       });
 
       toast.success("Presente atualizado!");
@@ -79,18 +99,9 @@ export function EditGiftDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={save} className="space-y-4">
-          <div className="aspect-video rounded-2xl overflow-hidden bg-secondary">
-            <img src={image} alt="" className="w-full h-full object-cover" />
-          </div>
           <div>
-            <Label htmlFor="g-title">Nome</Label>
-            <Input
-              id="g-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="h-11 rounded-xl mt-1.5"
-              required
-            />
+            <Label>Imagem do Presente</Label>
+            <ImageUploader value={image} onUpload={setImage} />
           </div>
           <div>
             <Label htmlFor="g-marca">Marca (Opcional)</Label>
@@ -112,7 +123,7 @@ export function EditGiftDialog({
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label htmlFor="g-total">Valor total (R$)</Label>
               <Input
@@ -138,6 +149,44 @@ export function EditGiftDialog({
                 className="h-11 rounded-xl mt-1.5"
                 required
               />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label>Categoria</Label>
+              <Select
+                value={category}
+                onValueChange={(v) => setCategory(v as GiftCategory)}
+              >
+                <SelectTrigger className="h-11 rounded-xl mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GIFT_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.icon} {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Prioridade</Label>
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v as GiftPriority)}
+              >
+                <SelectTrigger className="h-11 rounded-xl mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GIFT_PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.icon} {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">

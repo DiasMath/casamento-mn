@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f8ff"/>
+      <stop offset="100%" stop-color="#fff8dc"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a8d8ea"/>
+      <stop offset="100%" stop-color="#f9e79f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <path d="M600 520 C450 390, 330 310, 330 200 C330 120, 390 70, 470 70 C520 70, 570 100, 600 150 C630 100, 680 70, 730 70 C810 70, 870 120, 870 200 C870 310, 750 390, 600 520Z" fill="url(#heart)" opacity="0.3"/>
+  <text x="600" y="240" text-anchor="middle" font-family="Georgia, serif" font-size="72" font-style="italic" fill="#4a6fa5">Matheus &amp; Nayana</text>
+  <text x="600" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#666">14 de Fevereiro de 2027</text>
+  <text x="600" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#888">Quinta dos Jardins — Itaipava, RJ</text>
+</svg>

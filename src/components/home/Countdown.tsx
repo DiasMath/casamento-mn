@@ -27,7 +27,9 @@ export function Countdown() {
   return (
     <section className="px-4 py-16 sm:py-20">
       <div className="max-w-4xl mx-auto text-center">
-        <p className="font-script text-3xl text-primary">contagem regressiva</p>
+        <p className="font-script text-3xl sm:text-4xl text-primary">
+          contagem regressiva
+        </p>
         <h2 className="text-2xl sm:text-3xl font-semibold mt-2 text-foreground">
           Faltam pouquinho para o nosso dia
         </h2>
@@ -40,7 +42,7 @@ export function Countdown() {
               <div className="text-3xl sm:text-5xl font-semibold tabular-nums text-foreground">
                 {i.v.toString().padStart(2, "0")}
               </div>
-              <div className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-2">
+              <div className="text-xs sm:text-sm uppercase tracking-widest text-muted-foreground mt-2">
                 {i.label}
               </div>
             </div>

@@ -1,44 +1,85 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Check, Sparkles, Loader2 } from "lucide-react";
+import { Check, Sparkles, Loader2, Heart, X } from "lucide-react";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
 import { addRSVP } from "@/lib/firestoreService";
 
+const PHONE_REGEX = /^\(\d{2}\)\s?9\d{4}-?\d{4}$/;
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export function RSVP() {
+  const [attending, setAttending] = useState<boolean | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [companions, setCompanions] = useState("0");
   const [done, setDone] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhone(value);
+    setPhone(formatted);
+    if (formatted && !PHONE_REGEX.test(formatted)) {
+      setPhoneError("Formato: (XX) 9XXXX-XXXX");
+    } else {
+      setPhoneError("");
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!name.trim()) {
+      toast.error("Por favor, informe seu nome.");
+      return;
+    }
+
+    if (phone && !PHONE_REGEX.test(phone)) {
+      setPhoneError("Formato: (XX) 9XXXX-XXXX");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const totalGuests = Number(companions) + 1; // +1 é a própria pessoa
+      const totalGuests = (Number(companions) || 0) + 1;
       await addRSVP(name.trim(), phone.trim(), totalGuests);
 
       setDone(true);
       toast.success("Presença confirmada! 💛", {
         description: `Obrigado, ${name.split(" ")[0]}.`,
       });
-      setTimeout(() => {
-        setDone(false);
-        setName("");
-        setPhone("");
-        setCompanions("0");
-      }, 3000);
     } catch (error) {
       console.error("Erro ao confirmar presença:", error);
       toast.error("Erro ao confirmar. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setDone(false);
+    setAttending(null);
+    setName("");
+    setPhone("");
+    setCompanions("0");
+    setPhoneError("");
   };
 
   return (
@@ -115,7 +156,9 @@ export function RSVP() {
       />
 
       <div className="relative max-w-xl mx-auto text-center">
-        <p className="font-script text-3xl text-primary">presença</p>
+        <p className="font-script text-3xl sm:text-4xl text-primary">
+          presença
+        </p>
         <h2 className="text-2xl sm:text-4xl font-semibold mt-2">
           Confirme sua presença
         </h2>
@@ -124,65 +167,135 @@ export function RSVP() {
           este dia com a gente.
         </p>
 
-        <form
-          onSubmit={submit}
-          className="mt-10 bg-card rounded-3xl p-6 sm:p-8 border border-border/60 shadow-[var(--shadow-card)] text-left space-y-4"
-        >
-          <div>
-            <Label htmlFor="rsvp-name">Nome completo</Label>
-            <Input
-              id="rsvp-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Como devemos chamar você?"
-              className="h-12 rounded-xl mt-2"
-            />
+        {/* Estado de sucesso */}
+        {done ? (
+          <div className="mt-10 bg-card rounded-3xl p-8 sm:p-10 border border-border/60 shadow-[var(--shadow-card)] text-center space-y-4 animate-in fade-in duration-500">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Heart className="w-8 h-8 text-primary fill-primary/40" />
+            </div>
+            <h3 className="text-xl font-semibold">Presença confirmada!</h3>
+            <p className="text-muted-foreground">
+              Obrigado,{" "}
+              <span className="font-medium text-foreground">
+                {name.split(" ")[0]}
+              </span>
+              !
+              <br />
+              Estamos muito felizes em ter você conosco.
+            </p>
+            <Button
+              onClick={resetForm}
+              variant="outline"
+              className="rounded-full mt-2"
+            >
+              Confirmar outra presença
+            </Button>
           </div>
-          <div>
-            <Label htmlFor="rsvp-phone">Telefone (WhatsApp)</Label>
-            <Input
-              id="rsvp-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              placeholder="(11) 99999-9999"
-              className="h-12 rounded-xl mt-2"
-            />
+        ) : attending === null ? (
+          /* Toggle presença */
+          <div className="mt-10 bg-card rounded-3xl p-6 sm:p-8 border border-border/60 shadow-[var(--shadow-card)]">
+            <p className="text-foreground/80 mb-6">
+              Você vai poder comparecer ao casamento?
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={() => setAttending(true)}
+                className="flex-1 h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base gap-2"
+              >
+                <Sparkles className="w-4 h-4" /> Vou comparecer!
+              </Button>
+              <Button
+                onClick={() => setAttending(false)}
+                variant="outline"
+                className="flex-1 h-12 rounded-full text-base gap-2"
+              >
+                <X className="w-4 h-4" /> Não vou poder
+              </Button>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="rsvp-comp">Acompanhantes</Label>
-            <Input
-              id="rsvp-comp"
-              type="number"
-              min={0}
-              max={5}
-              value={companions}
-              onChange={(e) => setCompanions(e.target.value)}
-              className="h-12 rounded-xl mt-2"
-            />
+        ) : !attending ? (
+          /* Não vai comparecer */
+          <div className="mt-10 bg-card rounded-3xl p-8 sm:p-10 border border-border/60 shadow-[var(--shadow-card)] text-center space-y-4 animate-in fade-in duration-500">
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+              <X className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold">Sentiremos sua falta!</h3>
+            <p className="text-muted-foreground">
+              Não se preocupe, vamos sentir sua falta. Um abraço!
+            </p>
+            <Button
+              onClick={() => setAttending(null)}
+              variant="outline"
+              className="rounded-full mt-2"
+            >
+              Mudou de ideia? Voltar
+            </Button>
           </div>
-          <Button
-            type="submit"
-            disabled={done || isSubmitting}
-            className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base disabled:opacity-70"
+        ) : (
+          /* Formulário de confirmação */
+          <form
+            onSubmit={submit}
+            className="mt-10 bg-card rounded-3xl p-6 sm:p-8 border border-border/60 shadow-[var(--shadow-card)] text-left space-y-4 animate-in fade-in duration-300"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...
-              </>
-            ) : done ? (
-              <>
-                <Check className="w-4 h-4 mr-2" /> Presença confirmada
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" /> Confirmar presença
-              </>
-            )}
-          </Button>
-        </form>
+            <div>
+              <Label htmlFor="rsvp-name">Nome completo</Label>
+              <Input
+                id="rsvp-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Como devemos chamar você?"
+                className="h-12 rounded-xl mt-2"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="rsvp-phone">Telefone (WhatsApp)</Label>
+              <Input
+                id="rsvp-phone"
+                type="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className={`h-12 rounded-xl mt-2 ${phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                disabled={isSubmitting}
+              />
+              {phoneError && (
+                <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="rsvp-comp">Acompanhantes</Label>
+              <Input
+                id="rsvp-comp"
+                type="number"
+                min={0}
+                max={5}
+                value={companions}
+                onChange={(e) => setCompanions(e.target.value)}
+                className="h-12 rounded-xl mt-2"
+                disabled={isSubmitting}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              className="w-full h-12 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-base disabled:opacity-70 transition-all"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" /> Confirmar presença
+                </>
+              )}
+            </Button>
+          </form>
+        )}
       </div>
     </section>
   );

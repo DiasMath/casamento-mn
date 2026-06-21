@@ -212,7 +212,7 @@ export function PaymentSheet({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Queremos agradecer pessoalmente!"
-                className="rounded-xl"
+                className="rounded-xl h-11"
               />
             </div>
 
@@ -235,7 +235,7 @@ export function PaymentSheet({
             </div>
 
             <Tabs defaultValue="pix" className="w-full mt-4">
-              <TabsList className="grid grid-cols-2 w-full rounded-full">
+              <TabsList className="grid grid-cols-2 w-full rounded-full h-11">
                 <TabsTrigger value="pix" className="rounded-full">
                   PIX
                 </TabsTrigger>
@@ -280,7 +280,9 @@ export function PaymentSheet({
               >
                 <Clock className="w-4 h-4" />
                 <span>
-                  {isExpired ? "Expirado" : `Expira em: ${formatTime(expiresIn)}`}
+                  {isExpired
+                    ? "Expirado"
+                    : `Expira em: ${formatTime(expiresIn)}`}
                 </span>
               </div>
             </div>
@@ -298,7 +300,9 @@ export function PaymentSheet({
             <div className="w-full space-y-2">
               {!isExpired && (
                 <>
-                  <Label className="text-center block">Ou copie o código PIX</Label>
+                  <Label className="text-center block">
+                    Ou copie o código PIX
+                  </Label>
                   <div className="flex gap-2">
                     <Input
                       readOnly

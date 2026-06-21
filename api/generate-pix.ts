@@ -20,7 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { amount, description, giftId, payerName } = req.body as PaymentRequest | undefined;
+    const { amount, description, giftId, payerName } = req.body as
+      | PaymentRequest
+      | undefined;
 
     // Validar campos obrigatórios
     if (!amount || amount <= 0 || !description || !giftId) {
@@ -68,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("Erro ao gerar PIX:", error);
     const err = error as { status?: number; message?: string };
     return res.status(err.status || 500).json({
-      error: err.message || "Erro ao gerar pagamento"
+      error: err.message || "Erro ao gerar pagamento",
     });
   }
 }

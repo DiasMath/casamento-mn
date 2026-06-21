@@ -142,7 +142,7 @@ export function AdminLogin() {
 
           <Link
             to="/"
-            className="mt-6 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="mt-6 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground py-3 px-2"
           >
             <Heart className="w-3 h-3" /> voltar ao site
           </Link>

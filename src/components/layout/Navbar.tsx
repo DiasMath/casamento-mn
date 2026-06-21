@@ -35,7 +35,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />
-          <span className="font-script text-xl tracking-wide text-foreground">
+          <span className="font-script text-xl tracking-wide text-foreground whitespace-nowrap">
             {COUPLE.groom} & {COUPLE.bride}
           </span>
         </Link>

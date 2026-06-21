@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getGifts, Gift } from "@/lib/firestoreService";
+import { getVisibleGifts, Gift } from "@/lib/firestoreService";
 // IMPORTAR O NOVO CARD PÚBLICO AQUI
 import { GiftCardPublic } from "@/components/gifts/GiftCardPublic";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ export function GiftListSection() {
 
   const loadGifts = async () => {
     try {
-      const data = await getGifts();
+      const data = await getVisibleGifts();
       // Mostramos os primeiros 8 presentes na Home (já que 4 cabem por linha agora)
       setGifts(data.slice(0, 8));
     } catch (error) {
@@ -48,7 +48,9 @@ export function GiftListSection() {
 
       <div className="relative max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <p className="font-script text-3xl text-primary">presentes</p>
+          <p className="font-script text-3xl sm:text-4xl text-primary">
+            presentes
+          </p>
           <h2 className="text-3xl sm:text-4xl font-semibold mt-2">
             Lista de Presentes
           </h2>
@@ -78,7 +80,7 @@ export function GiftListSection() {
               <Button
                 asChild
                 size="lg"
-                className="rounded-full px-8 gap-2 group text-sm"
+                className="rounded-full px-8 gap-2 group text-sm h-12"
               >
                 <Link to="/present-list">
                   Ver lista completa

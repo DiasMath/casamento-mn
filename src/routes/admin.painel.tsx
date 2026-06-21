@@ -13,13 +13,28 @@ import {
   Timer,
   Hourglass,
 } from "lucide-react";
-import { getGifts, Gift, getRSVPs, RSVP } from "../lib/firestoreService";
+import {
+  getGifts,
+  Gift,
+  getRSVPs,
+  RSVP,
+  getContributions,
+  Contribution,
+} from "../lib/firestoreService";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { WEDDING_DATE } from "@/lib/constants";
+import {
+  WEDDING_DATE,
+  GIFT_CATEGORIES,
+  GIFT_PRIORITIES,
+} from "@/lib/constants";
+import { ContributionChart } from "@/components/admin/ContributionChart";
+import { CategoryStats } from "@/components/admin/CategoryStats";
+import { PriorityStats } from "@/components/admin/PriorityStats";
+import { SiteImagesDialog } from "@/components/admin/SiteImagesSection";
 
 export function AdminPainel() {
   const { isAdmin, loading } = useAuth();
@@ -27,16 +42,23 @@ export function AdminPainel() {
 
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
+  const [contributions, setContributions] = useState<Contribution[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       setLoadingData(true);
-      const [giftList, rsvpList] = await Promise.all([getGifts(), getRSVPs()]);
+      const [giftList, rsvpList, contribList] = await Promise.all([
+        getGifts(),
+        getRSVPs(),
+        getContributions(),
+      ]);
       console.log("[AdminPainel] Gifts carregados:", giftList);
       console.log("[AdminPainel] RSVPs carregados:", rsvpList);
+      console.log("[AdminPainel] Contributions carregadas:", contribList);
       setGifts(giftList);
       setRsvps(rsvpList);
+      setContributions(contribList);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -131,16 +153,19 @@ export function AdminPainel() {
 
   return (
     <section className="px-4 pt-10 pb-20 max-w-6xl mx-auto space-y-10">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
           <p className="font-script text-3xl text-primary">olá, noivos</p>
           <h1 className="text-3xl font-semibold mt-1">Painel Administrativo</h1>
         </div>
-        <Button variant="outline" asChild className="rounded-full gap-2">
-          <Link to="/">
-            <ArrowLeft className="w-4 h-4" /> Voltar ao Site
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <SiteImagesDialog />
+          <Button variant="outline" asChild className="rounded-full gap-2">
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4" /> Voltar ao Site
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Grid de Estatísticas */}
@@ -178,6 +203,15 @@ export function AdminPainel() {
         ))}
       </div>
 
+      {/* Dashboard de Contribuições e Indicadores */}
+      <div className="space-y-6">
+        <ContributionChart contributions={contributions} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CategoryStats gifts={gifts} />
+          <PriorityStats gifts={gifts} />
+        </div>
+      </div>
+
       <div className="space-y-8">
         {/* Tabela de Presentes */}
         <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
@@ -193,19 +227,25 @@ export function AdminPainel() {
           </div>
           {/* Desktop: tabela | Mobile: cards */}
           <div className="hidden md:block max-h-[400px] overflow-y-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-center border-collapse text-sm">
               <thead className="sticky top-0 bg-card z-10 shadow-sm">
                 <tr className="bg-muted/50 text-muted-foreground text-[10px] uppercase">
                   <th className="px-6 py-3 font-bold border-b border-border">
                     Presente / Marca
                   </th>
                   <th className="px-6 py-3 font-bold border-b border-border">
+                    Categoria
+                  </th>
+                  <th className="px-6 py-3 font-bold border-b border-border">
+                    Prioridade
+                  </th>
+                  <th className="px-6 py-3 font-bold border-b border-border">
                     Progresso
                   </th>
-                  <th className="px-6 py-3 font-bold text-right border-b border-border">
+                  <th className="px-6 py-3 font-bold border-b border-border">
                     Arrecadado
                   </th>
-                  <th className="px-6 py-3 font-bold text-right border-b border-border">
+                  <th className="px-6 py-3 font-bold border-b border-border">
                     Total
                   </th>
                 </tr>
@@ -213,31 +253,64 @@ export function AdminPainel() {
               <tbody className="divide-y">
                 {gifts.map((g) => {
                   const pct = calculatePercentage(g.raised, g.total);
+                  const cat = GIFT_CATEGORIES.find(
+                    (c) => c.value === (g.category ?? "outros"),
+                  );
+                  const pri = GIFT_PRIORITIES.find(
+                    (p) => p.value === (g.priority ?? "media"),
+                  );
+                  const priColor =
+                    (g.priority ?? "media") === "alta"
+                      ? "text-red-600 bg-red-50 border-red-200"
+                      : (g.priority ?? "media") === "baixa"
+                        ? "text-green-600 bg-green-50 border-green-200"
+                        : "text-yellow-600 bg-yellow-50 border-yellow-200";
                   return (
                     <tr
                       key={g.id}
                       className="hover:bg-muted/20 transition-colors"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center">
                         <p className="font-medium line-clamp-1">{g.title}</p>
                         {g.marca && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                          <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-0.5">
                             <Tag className="w-3 h-3" /> {g.marca}
                           </div>
                         )}
                       </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-sm">
+                          {cat?.icon} {cat?.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${priColor}`}
+                        >
+                          {pri?.icon} {pri?.label}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 min-w-[150px]">
-                        <div className="space-y-1">
-                          <Progress value={pct} className="h-1.5" />
-                          <span className="text-[10px] font-medium text-muted-foreground">
+                        <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                              pct >= 100
+                                ? "bg-green-500"
+                                : pct >= 50
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
                             {pct}%
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right font-medium tabular-nums">
+                      <td className="px-6 py-4 text-center font-medium tabular-nums">
                         {brl(g.raised)}
                       </td>
-                      <td className="px-6 py-4 text-right tabular-nums text-muted-foreground">
+                      <td className="px-6 py-4 text-center tabular-nums text-muted-foreground">
                         {brl(g.total)}
                       </td>
                     </tr>
@@ -250,6 +323,18 @@ export function AdminPainel() {
           <div className="md:hidden divide-y">
             {gifts.map((g) => {
               const pct = calculatePercentage(g.raised, g.total);
+              const cat = GIFT_CATEGORIES.find(
+                (c) => c.value === (g.category ?? "outros"),
+              );
+              const pri = GIFT_PRIORITIES.find(
+                (p) => p.value === (g.priority ?? "media"),
+              );
+              const priColor =
+                (g.priority ?? "media") === "alta"
+                  ? "text-red-600 bg-red-50 border-red-200"
+                  : (g.priority ?? "media") === "baixa"
+                    ? "text-green-600 bg-green-50 border-green-200"
+                    : "text-yellow-600 bg-yellow-50 border-yellow-200";
               return (
                 <div key={g.id} className="p-4 space-y-3">
                   <div>
@@ -260,11 +345,28 @@ export function AdminPainel() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 mr-4">
-                      <Progress value={pct} className="h-2" />
-                    </div>
-                    <span className="text-sm font-medium text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span>
+                      {cat?.icon} {cat?.label}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold border ${priColor}`}
+                    >
+                      {pri?.icon} {pri?.label}
+                    </span>
+                  </div>
+                  <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                        pct >= 100
+                          ? "bg-green-500"
+                          : pct >= 50
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
                       {pct}%
                     </span>
                   </div>
@@ -274,7 +376,9 @@ export function AdminPainel() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total:</span>
-                    <span className="text-muted-foreground">{brl(g.total)}</span>
+                    <span className="text-muted-foreground">
+                      {brl(g.total)}
+                    </span>
                   </div>
                 </div>
               );
@@ -353,7 +457,9 @@ export function AdminPainel() {
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Total grupo:</span>
-                  <span className="font-bold text-primary">{r.guestsCount} pessoas</span>
+                  <span className="font-bold text-primary">
+                    {r.guestsCount} pessoas
+                  </span>
                 </div>
               </div>
             ))}

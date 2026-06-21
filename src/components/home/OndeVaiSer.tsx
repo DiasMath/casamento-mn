@@ -64,7 +64,9 @@ export function OndeVaiSer() {
       />
       <div className="max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">
-          <p className="font-script text-3xl text-primary">onde vai ser</p>
+          <p className="font-script text-3xl sm:text-4xl text-primary">
+            onde vai ser
+          </p>
           <h2 className="text-2xl sm:text-3xl font-semibold mt-2">
             O grande dia
           </h2>

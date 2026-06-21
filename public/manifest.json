@@ -1,0 +1,17 @@
+{
+  "name": "Casamento Matheus & Nayana",
+  "short_name": "Casamento M&N",
+  "description": "Site do casamento de Matheus e Nayana — 14/02/2027",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

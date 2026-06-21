@@ -19,9 +19,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 // Função para validar a assinatura do webhook do Mercado Pago
-function validateSignature(
-  req: VercelRequest,
-): boolean {
+function validateSignature(req: VercelRequest): boolean {
   const signature = req.headers["x-signature"] as string;
   const timestamp = req.headers["x-signature-ts"] as string;
   const secret = process.env.MP_WEBHOOK_SECRET;
@@ -29,7 +27,9 @@ function validateSignature(
 
   // Se for o ID de teste do Mercado Pago (123456), aceitar sem validar
   if (paymentId === "123456") {
-    console.log("[Webhook] ℹ️ Teste do Mercado Pago detectado - pulando validação");
+    console.log(
+      "[Webhook] ℹ️ Teste do Mercado Pago detectado - pulando validação",
+    );
     return true;
   }
 
@@ -43,7 +43,9 @@ function validateSignature(
 
   // Se não tiver os headers, permite mas loga (para debug)
   if (!signature || !timestamp) {
-    console.log("[Webhook] ⚠️ Assinatura não enviada, verificando via API do MP");
+    console.log(
+      "[Webhook] ⚠️ Assinatura não enviada, verificando via API do MP",
+    );
     return true; // Permite e verifica via API do MP depois
   }
 
@@ -62,10 +64,13 @@ function validateSignature(
   const isValid = providedSignature === expectedSignature;
 
   if (!isValid) {
-    console.log("[Webhook] ⚠️ Assinatura inválida, mas verificando via API do MP", {
-      expected: expectedSignature,
-      provided: providedSignature,
-    });
+    console.log(
+      "[Webhook] ⚠️ Assinatura inválida, mas verificando via API do MP",
+      {
+        expected: expectedSignature,
+        provided: providedSignature,
+      },
+    );
     // Não rejeita, vai verificar via API do MP
   } else {
     console.log("[Webhook] ✓ Assinatura válida");

@@ -6,6 +6,7 @@ import { calculatePercentage } from "@/lib/utils";
 import { Gift } from "@/lib/firestoreService";
 import { PaymentSheet } from "./PaymentSheet";
 import { useGiftPayment } from "@/hooks/useGiftPayment";
+import { GIFT_CATEGORIES } from "@/lib/constants";
 
 interface GiftCardPublicProps {
   gift: Gift;
@@ -42,12 +43,24 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
                 {localGift.marca}
               </p>
             )}
+            {localGift.category && (
+              <span className="inline-flex items-center text-xs text-muted-foreground mt-1">
+                {
+                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                    ?.icon
+                }{" "}
+                {
+                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                    ?.label
+                }
+              </span>
+            )}
           </div>
 
           {/* Barra de progresso mais fina e valores menores */}
           <div className="space-y-1 mt-auto">
             <Progress value={pct} className="h-1" />
-            <div className="flex justify-between items-baseline text-[11px] text-muted-foreground">
+            <div className="flex justify-between items-baseline text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{pct}%</span>
               <span>{brl(localGift.total)}</span>
             </div>
@@ -58,7 +71,7 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
             onClick={() => setPayOpen(true)}
             disabled={completed}
             size="sm"
-            className="w-full rounded-full h-9 text-xs transition-transform active:scale-95"
+            className="w-full rounded-full h-11 text-sm transition-transform active:scale-95"
             variant={completed ? "secondary" : "default"}
           >
             {completed ? (

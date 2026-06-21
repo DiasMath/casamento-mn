@@ -55,12 +55,12 @@ export function DeleteGiftDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="rounded-full">
+          <AlertDialogCancel className="rounded-full h-11">
             Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={confirm}
-            className="rounded-full bg-destructive text-destructive-foreground hover:opacity-90"
+            className="rounded-full h-11 bg-destructive text-destructive-foreground hover:opacity-90"
           >
             Excluir
           </AlertDialogAction>

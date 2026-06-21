@@ -12,7 +12,19 @@ import {
   serverTimestamp,
   Timestamp,
   increment,
+  onSnapshot,
 } from "firebase/firestore";
+
+export type GiftCategory =
+  | "cozinha"
+  | "quarto"
+  | "sala"
+  | "banheiro"
+  | "lavanderia"
+  | "decoracao"
+  | "outros";
+
+export type GiftPriority = "alta" | "media" | "baixa";
 
 export interface Gift {
   id: string;
@@ -21,6 +33,9 @@ export interface Gift {
   image: string;
   total: number;
   raised: number;
+  hidden: boolean;
+  category: GiftCategory;
+  priority: GiftPriority;
 }
 
 export interface RSVP {
@@ -38,6 +53,15 @@ export interface Message {
   createdAt: Timestamp;
 }
 
+export interface Contribution {
+  id: string;
+  giftId: string;
+  giftTitle: string;
+  contributorName: string;
+  value: number;
+  date: Timestamp;
+}
+
 /**
  * Função utilitária (DRY) para garantir que o banco de dados foi inicializado
  * antes de qualquer operação. Lança um erro se houver falha na conexão.
@@ -52,13 +76,25 @@ const getDb = () => {
 };
 
 /**
- * Puxa todos os presentes ordenados por título
+ * Ordena presentes: incompletos primeiro (A-Z), concluídos por último (A-Z)
+ */
+function sortGifts(gifts: Gift[]): Gift[] {
+  return [...gifts].sort((a, b) => {
+    const aCompleted = a.raised >= a.total;
+    const bCompleted = b.raised >= b.total;
+    if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+    return a.title.localeCompare(b.title, "pt-BR");
+  });
+}
+
+/**
+ * Puxa todos os presentes: incompletos primeiro, concluídos por último
  */
 export const getGifts = async (): Promise<Gift[]> => {
   const giftsCol = collection(getDb(), "gifts");
   const giftSnap = await getDocs(query(giftsCol, orderBy("title")));
 
-  return giftSnap.docs.map((doc) => {
+  const gifts = giftSnap.docs.map((doc) => {
     const data = doc.data() as DocumentData;
     return {
       id: doc.id,
@@ -67,8 +103,13 @@ export const getGifts = async (): Promise<Gift[]> => {
       image: data.image,
       total: Number(data.total) || 0,
       raised: Number(data.raised) || 0,
+      hidden: data.hidden ?? false,
+      category: data.category ?? "outros",
+      priority: data.priority ?? "media",
     } as Gift;
   });
+
+  return sortGifts(gifts);
 };
 
 /**
@@ -82,6 +123,9 @@ export const addGift = async (gift: Omit<Gift, "id">): Promise<string> => {
     image: gift.image,
     total: gift.total,
     raised: gift.raised || 0,
+    hidden: gift.hidden ?? false,
+    category: gift.category ?? "outros",
+    priority: gift.priority ?? "media",
   });
   return docRef.id;
 };
@@ -103,6 +147,44 @@ export const updateGift = async (
 export const deleteGift = async (id: string): Promise<void> => {
   const giftRef = doc(getDb(), "gifts", id);
   await deleteDoc(giftRef);
+};
+
+/**
+ * Alterna a visibilidade de um presente (oculto/visível)
+ */
+export const toggleGiftVisibility = async (
+  id: string,
+  hidden: boolean,
+): Promise<void> => {
+  const giftRef = doc(getDb(), "gifts", id);
+  await updateDoc(giftRef, { hidden });
+};
+
+/**
+ * Puxa apenas os presentes visíveis: incompletos primeiro, concluídos por último
+ */
+export const getVisibleGifts = async (): Promise<Gift[]> => {
+  const giftsCol = collection(getDb(), "gifts");
+  const giftSnap = await getDocs(query(giftsCol, orderBy("title")));
+
+  const gifts = giftSnap.docs
+    .map((doc) => {
+      const data = doc.data() as DocumentData;
+      return {
+        id: doc.id,
+        title: data.title,
+        marca: data.marca || "",
+        image: data.image,
+        total: Number(data.total) || 0,
+        raised: Number(data.raised) || 0,
+        hidden: data.hidden ?? false,
+        category: data.category ?? "outros",
+        priority: data.priority ?? "media",
+      } as Gift;
+    })
+    .filter((gift) => !gift.hidden);
+
+  return sortGifts(gifts);
 };
 
 /**
@@ -146,6 +228,37 @@ export const getMessages = async (): Promise<Message[]> => {
 };
 
 /**
+ * Escuta recados em tempo real. Retorna uma função de cleanup para unsubscribe.
+ */
+export const subscribeMessages = (
+  callback: (messages: Message[]) => void,
+  onError?: (error: Error) => void,
+): (() => void) => {
+  const msgCol = collection(getDb(), "messages");
+  const q = query(msgCol, orderBy("createdAt", "desc"));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const messages = snapshot.docs.map((doc) => {
+        const data = doc.data() as DocumentData;
+        return {
+          id: doc.id,
+          name: data.name,
+          text: data.text,
+          createdAt: data.createdAt,
+        } as Message;
+      });
+      callback(messages);
+    },
+    (error) => {
+      console.error("Erro no listener de recados:", error);
+      onError?.(error);
+    },
+  );
+};
+
+/**
  * Adiciona um novo recado
  */
 export const addMessage = async (
@@ -159,6 +272,25 @@ export const addMessage = async (
     createdAt: serverTimestamp(),
   });
   return docRef.id;
+};
+
+/**
+ * Puxa todas as contribuições ordenadas por data (mais recentes primeiro)
+ */
+export const getContributions = async (): Promise<Contribution[]> => {
+  const col = collection(getDb(), "contributions");
+  const snap = await getDocs(query(col, orderBy("date", "desc")));
+  return snap.docs.map((doc) => {
+    const data = doc.data() as DocumentData;
+    return {
+      id: doc.id,
+      giftId: data.giftId,
+      giftTitle: data.giftTitle || "",
+      contributorName: data.contributorName || "Anônimo",
+      value: Number(data.value) || 0,
+      date: data.date,
+    } as Contribution;
+  });
 };
 
 export const registerContribution = async (
@@ -200,4 +332,50 @@ export const addRSVP = async (
     confirmedAt: serverTimestamp(),
   });
   return docRef.id;
+};
+
+/**
+ * Imagens do site (hero, capítulos da história)
+ */
+export type SiteImageKey = "hero" | "story1" | "story2" | "story3" | "story4";
+
+export interface SiteImages {
+  hero: string;
+  story1: string;
+  story2: string;
+  story3: string;
+  story4: string;
+}
+
+export const SITE_IMAGE_DEFAULTS: SiteImages = {
+  hero: "",
+  story1: "",
+  story2: "",
+  story3: "",
+  story4: "",
+};
+
+export const getSiteImages = async (): Promise<SiteImages> => {
+  try {
+    const docRef = doc(getDb(), "settings", "siteImages");
+    const docSnap = await import("firebase/firestore").then((m) =>
+      m.getDoc(docRef),
+    );
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return { ...SITE_IMAGE_DEFAULTS, ...data } as SiteImages;
+    }
+  } catch (error) {
+    console.error("Erro ao buscar imagens do site:", error);
+  }
+  return SITE_IMAGE_DEFAULTS;
+};
+
+export const updateSiteImage = async (
+  key: SiteImageKey,
+  url: string,
+): Promise<void> => {
+  const docRef = doc(getDb(), "settings", "siteImages");
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(docRef, { [key]: url }, { merge: true });
 };

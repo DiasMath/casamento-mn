@@ -1,6 +1,8 @@
-import heroImg from "@/assets/hero-couple.jpg";
+import { useState, useEffect } from "react";
+import heroImgFallback from "@/assets/hero-couple.jpg";
 import { COUPLE, WEDDING_DATE } from "@/lib/constants";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
+import { getSiteImages } from "@/lib/firestoreService";
 
 const dateStr = WEDDING_DATE.toLocaleDateString("pt-BR", {
   day: "2-digit",
@@ -9,13 +11,21 @@ const dateStr = WEDDING_DATE.toLocaleDateString("pt-BR", {
 });
 
 export function Hero() {
+  const [heroSrc, setHeroSrc] = useState<string>(heroImgFallback);
+
+  useEffect(() => {
+    getSiteImages().then((imgs) => {
+      if (imgs.hero) setHeroSrc(imgs.hero);
+    });
+  }, []);
+
   return (
     <section
       id="save-date"
       className="relative min-h-[88vh] flex items-center justify-center overflow-hidden"
     >
       <img
-        src={heroImg}
+        src={heroSrc}
         alt="Foto dos noivos"
         width={1536}
         height={1024}

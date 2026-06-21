@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,16 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { getMessages, addMessage, Message } from "@/lib/firestoreService";
+import { subscribeMessages, addMessage, Message } from "@/lib/firestoreService";
+
+const MAX_NAME = 50;
+const MAX_TEXT = 300;
+
+function formatRelativeDate(timestamp: Message["createdAt"]): string {
+  if (!timestamp) return "";
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
+}
 
 export function Recados() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,42 +30,62 @@ export function Recados() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Função para carregar os recados do Firebase
-  const loadMessages = useCallback(async () => {
-    try {
-      const data = await getMessages();
-      setMessages(data);
-    } catch (error) {
-      console.error("Erro ao carregar recados:", error);
-      toast.error("Não foi possível carregar os recados.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Carrega as mensagens ao montar o componente
   useEffect(() => {
-    loadMessages();
-  }, [loadMessages]);
+    const unsubscribe = subscribeMessages(
+      (data) => {
+        setMessages(data);
+        setLoading(false);
+      },
+      () => {
+        toast.error("Não foi possível carregar os recados.");
+        setLoading(false);
+      },
+    );
+    return unsubscribe;
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !text.trim()) return;
+
+    if (!name.trim()) {
+      toast.error("Por favor, informe seu nome.");
+      return;
+    }
+    if (!text.trim()) {
+      toast.error("Por favor, escreva um recado.");
+      return;
+    }
+
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
-      // Salva no Firebase
-      await addMessage(name.trim(), text.trim());
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage: Message = {
+        id: tempId,
+        name: name.trim(),
+        text: text.trim(),
+        createdAt: { toDate: () => new Date() } as any,
+      };
 
-      toast.success("Recado enviado! 💛");
+      setMessages((prev) => [optimisticMessage, ...prev]);
       setName("");
       setText("");
 
-      // Recarrega a lista para mostrar o novo recado
-      loadMessages();
+      const docId = await addMessage(
+        optimisticMessage.name,
+        optimisticMessage.text,
+      );
+
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, id: docId } : m)),
+      );
+
+      toast.success("Recado enviado! 💛");
     } catch (error) {
       console.error("Erro ao enviar recado:", error);
       toast.error("Erro ao enviar. Tente novamente.");
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +120,9 @@ export function Recados() {
 
       <div className="relative max-w-6xl mx-auto">
         <div className="text-center mb-10">
-          <p className="font-script text-3xl text-primary">recados</p>
+          <p className="font-script text-3xl sm:text-4xl text-primary">
+            recados
+          </p>
           <h2 className="text-2xl sm:text-4xl font-semibold mt-2">
             Mural dos convidados
           </h2>
@@ -111,12 +142,16 @@ export function Recados() {
               <Input
                 id="r-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
                 required
                 placeholder="Como se chama?"
                 className="h-11 rounded-xl mt-2"
                 disabled={isSubmitting}
+                maxLength={MAX_NAME}
               />
+              <p className="text-[10px] text-muted-foreground mt-1 text-right">
+                {name.length}/{MAX_NAME}
+              </p>
             </div>
             <div className="flex items-end">
               <Button
@@ -138,17 +173,21 @@ export function Recados() {
             <Textarea
               id="r-text"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
               required
               rows={3}
               placeholder="Escreva uma mensagem..."
               className="rounded-xl mt-2 resize-none"
               disabled={isSubmitting}
+              maxLength={MAX_TEXT}
             />
+            <p className="text-[10px] text-muted-foreground mt-1 text-right">
+              {text.length}/{MAX_TEXT}
+            </p>
           </div>
         </form>
 
-        {/* ÁREA DO CARROSSEL */}
+        {/* Área do carrossel */}
         <div className="w-full">
           {loading ? (
             <div className="flex justify-center items-center h-[160px]">
@@ -176,8 +215,7 @@ export function Recados() {
               className="w-full"
             >
               <CarouselContent className="-ml-4">
-                {/* Duplicamos o array de mensagens visualmente para garantir que o AutoScroll tenha um fluxo contínuo mesmo com poucos recados */}
-                {[...messages, ...messages, ...messages].map((m, index) => (
+                {[...messages, ...messages].map((m, index) => (
                   <CarouselItem
                     key={`${m.id}-${index}`}
                     className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
@@ -188,8 +226,13 @@ export function Recados() {
                         {m.name}
                       </p>
                       <p className="text-sm text-foreground/80 leading-relaxed italic flex-1 break-words">
-                        "{m.text}"
+                        &ldquo;{m.text}&rdquo;
                       </p>
+                      {m.createdAt && (
+                        <p className="text-[10px] text-muted-foreground mt-3">
+                          {formatRelativeDate(m.createdAt)}
+                        </p>
+                      )}
                     </div>
                   </CarouselItem>
                 ))}

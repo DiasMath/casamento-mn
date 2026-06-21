@@ -1,8 +1,10 @@
-import s1 from "@/assets/story-1.jpg";
-import s2 from "@/assets/story-2.jpg";
-import s3 from "@/assets/story-3.jpg";
-import s4 from "@/assets/story-4.jpg";
+import { useState, useEffect } from "react";
+import s1Fallback from "@/assets/story-1.jpg";
+import s2Fallback from "@/assets/story-2.jpg";
+import s3Fallback from "@/assets/story-3.jpg";
+import s4Fallback from "@/assets/story-4.jpg";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
+import { getSiteImages } from "@/lib/firestoreService";
 
 interface Chapter {
   eyebrow: string;
@@ -11,34 +13,53 @@ interface Chapter {
   image: string;
 }
 
-const chapters: Chapter[] = [
+const chaptersText = [
   {
     eyebrow: "Capítulo 01 — 2019",
     title: "O primeiro olhar",
     text: "Foi numa tarde de outono, num café pequeno do centro. Ela pediu um cappuccino, ele um espresso. Bastou um sorriso tímido para que duas histórias começassem a se encontrar — sem que nenhum dos dois soubesse, ainda, do tamanho do que viria.",
-    image: s1,
   },
   {
     eyebrow: "Capítulo 02 — 2020",
     title: "Cartas, ligações e madrugadas",
     text: "O mundo desacelerou e a gente acelerou por dentro. Conversas que viravam o dia, playlists trocadas, planos desenhados no papel. Foi quando entendemos que distância nenhuma seria capaz de afastar dois corações que já tinham combinado de ficar.",
-    image: s2,
   },
   {
     eyebrow: "Capítulo 03 — 2022",
     title: "Nossa primeira viagem",
     text: "Uma estradinha de serra, mala pequena e o coração enorme. Descobrimos juntos que viajar é fácil quando a melhor companhia já está dentro do carro. Foi nessa viagem que dissemos, sem pressa, que era pra vida toda.",
-    image: s3,
   },
   {
     eyebrow: "Capítulo 04 — 2024",
     title: "O pedido",
     text: 'Pôr do sol, aliança escondida no bolso, joelho no chão e um "sim" que veio antes mesmo da pergunta terminar. O resto, como dizem por aí, é história — e o próximo capítulo a gente escreve juntinho de você.',
-    image: s4,
   },
 ];
 
+const fallbacks = [s1Fallback, s2Fallback, s3Fallback, s4Fallback];
+
 export function NossaHistoria() {
+  const [images, setImages] = useState(fallbacks);
+
+  useEffect(() => {
+    getSiteImages().then((imgs) => {
+      const updated = [
+        imgs.story1 || fallbacks[0],
+        imgs.story2 || fallbacks[1],
+        imgs.story3 || fallbacks[2],
+        imgs.story4 || fallbacks[3],
+      ];
+      if (updated.some((img, i) => img !== fallbacks[i])) {
+        setImages(updated);
+      }
+    });
+  }, []);
+
+  const chapters: Chapter[] = chaptersText.map((ch, i) => ({
+    ...ch,
+    image: images[i],
+  }));
+
   return (
     <section
       id="historia"
@@ -126,7 +147,9 @@ export function NossaHistoria() {
 
       <div className="relative max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">
-          <p className="font-script text-3xl text-primary">nossa história</p>
+          <p className="font-script text-3xl sm:text-4xl text-primary">
+            nossa história
+          </p>
           <h2 className="text-2xl sm:text-4xl font-semibold mt-2">
             Como tudo aconteceu
           </h2>
@@ -162,7 +185,7 @@ export function NossaHistoria() {
                   />
                 </div>
                 <div className={reversed ? "md:order-1 md:text-right" : ""}>
-                  <p className="text-xs uppercase tracking-[0.3em] text-primary/80">
+                  <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-primary/80">
                     {c.eyebrow}
                   </p>
                   <h3 className="font-script text-4xl sm:text-5xl mt-3 text-foreground">

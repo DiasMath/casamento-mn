@@ -10,9 +10,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { addGift } from "@/lib/firestoreService";
+import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
+import { ImageUploader } from "./ImageUploader";
+import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
 interface AddGiftFABProps {
   onGiftAdded: () => void;
@@ -24,6 +34,8 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
   const [marca, setMarca] = useState("");
   const [image, setImage] = useState("");
   const [total, setTotal] = useState("");
+  const [category, setCategory] = useState<GiftCategory>("outros");
+  const [priority, setPriority] = useState<GiftPriority>("media");
   const [loading, setLoading] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -44,6 +56,8 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
         image: validImage,
         total: totalNum,
         raised: 0,
+        category,
+        priority,
       });
 
       toast.success("Presente adicionado!");
@@ -54,6 +68,8 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       setMarca("");
       setImage("");
       setTotal("");
+      setCategory("outros");
+      setPriority("media");
     } catch (error: any) {
       toast.error(error.message || "Erro ao adicionar");
     } finally {
@@ -98,13 +114,11 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
             />
           </div>
           <div>
-            <Label htmlFor="image">URL da Imagem</Label>
-            <Input
-              id="image"
+            <Label>Imagem do Presente</Label>
+            <ImageUploader
               value={image}
-              onChange={(e) => setImage(e.target.value)}
-              required
-              placeholder="https://..."
+              onUpload={setImage}
+              disabled={loading}
             />
           </div>
           <div>
@@ -117,6 +131,44 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
               onChange={(e) => setTotal(e.target.value)}
               required
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label>Categoria</Label>
+              <Select
+                value={category}
+                onValueChange={(v) => setCategory(v as GiftCategory)}
+              >
+                <SelectTrigger className="h-11 rounded-xl mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GIFT_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.icon} {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Prioridade</Label>
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v as GiftPriority)}
+              >
+                <SelectTrigger className="h-11 rounded-xl mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GIFT_PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.icon} {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button
             type="submit"

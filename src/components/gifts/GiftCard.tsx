@@ -1,14 +1,17 @@
-import { Pencil, Trash2, Check } from "lucide-react";
+import { Pencil, Trash2, Check, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Gift } from "@/lib/firestoreService";
+import { Gift, toggleGiftVisibility } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
+import { toast } from "sonner";
+import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
 interface GiftCardProps {
   gift: Gift;
@@ -21,6 +24,7 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [localGift, setLocalGift] = useState(gift);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
@@ -33,27 +37,67 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
     onUpdate();
   };
 
+  const handleToggleVisibility = async () => {
+    setTogglingVisibility(true);
+    try {
+      const newHidden = !localGift.hidden;
+      await toggleGiftVisibility(localGift.id, newHidden);
+      setLocalGift((prev) => ({ ...prev, hidden: newHidden }));
+      toast.success(newHidden ? "Presente ocultado" : "Presente visível");
+    } catch (error) {
+      console.error("Erro ao alterar visibilidade:", error);
+      toast.error("Erro ao alterar visibilidade");
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
   return (
     <>
       <div className="group bg-card rounded-2xl overflow-hidden border border-border/60 shadow-sm flex flex-col relative">
+        {/* Badge de status (Oculto) */}
+        {localGift.hidden && (
+          <div className="absolute top-2 left-2 z-10 bg-yellow-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+            Oculto
+          </div>
+        )}
+
         {/* Botões de Ação (Apenas Admin) com Animações */}
         {isAdmin && (
           <div className="absolute top-2 right-2 z-10 flex gap-2">
             <Button
               size="icon"
               variant="secondary"
-              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 hover:bg-white hover:text-primary"
+              className={`w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 ${
+                localGift.hidden
+                  ? "bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                  : "bg-white text-green-600 hover:bg-green-50"
+              }`}
+              onClick={handleToggleVisibility}
+              disabled={togglingVisibility}
+              title={localGift.hidden ? "Tornar visível" : "Ocultar"}
+            >
+              {localGift.hidden ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 hover:bg-white hover:text-primary"
               onClick={() => setEditOpen(true)}
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="w-5 h-5" />
             </Button>
             <Button
               size="icon"
               variant="destructive"
-              className="w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95"
+              className="w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-5 h-5" />
             </Button>
           </div>
         )}
@@ -74,6 +118,43 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                 {localGift.marca}
               </p>
+            )}
+          </div>
+
+          {/* Badges de Categoria e Prioridade */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {localGift.category && (
+              <Badge variant="secondary" className="text-xs font-normal">
+                {
+                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                    ?.icon
+                }{" "}
+                {
+                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                    ?.label
+                }
+              </Badge>
+            )}
+            {localGift.priority && (
+              <Badge
+                variant="outline"
+                className={`text-xs font-normal ${
+                  localGift.priority === "alta"
+                    ? "border-red-300 text-red-600"
+                    : localGift.priority === "media"
+                      ? "border-yellow-300 text-yellow-600"
+                      : "border-green-300 text-green-600"
+                }`}
+              >
+                {
+                  GIFT_PRIORITIES.find((p) => p.value === localGift.priority)
+                    ?.icon
+                }{" "}
+                {
+                  GIFT_PRIORITIES.find((p) => p.value === localGift.priority)
+                    ?.label
+                }
+              </Badge>
             )}
           </div>
 

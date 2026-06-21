@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -8,19 +9,40 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-import { Index } from "./routes/index";
-import { PresentList } from "./routes/present-list";
-import { AdminLogin } from "./routes/admin.login";
-import { AdminPainel } from "./routes/admin.painel";
+const Index = lazy(() =>
+  import("./routes/index").then((m) => ({ default: m.Index })),
+);
+const PresentList = lazy(() =>
+  import("./routes/present-list").then((m) => ({ default: m.PresentList })),
+);
+const AdminLogin = lazy(() =>
+  import("./routes/admin.login").then((m) => ({ default: m.AdminLogin })),
+);
+const AdminPainel = lazy(() =>
+  import("./routes/admin.painel").then((m) => ({ default: m.AdminPainel })),
+);
 
 export const queryClient = new QueryClient();
+
+function PageLoader() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 function AppLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ViewModeProvider>
-        <Outlet />
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
         <Toaster position="top-center" />
       </ViewModeProvider>
     </QueryClientProvider>
