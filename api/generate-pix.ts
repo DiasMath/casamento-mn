@@ -59,6 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body.notification_url = `${baseUrl}/api/webhook`;
     }
 
+    // Fallback: URL hardcoded do domínio do site
+    if (!body.notification_url) {
+      body.notification_url = "https://casamentomn.com/api/webhook";
+    }
+
     const result = await mpPayment.create({ body });
 
     return res.status(200).json({

@@ -54,7 +54,6 @@ export function PaymentSheet({
       setPixData(null);
       setExpiresIn(900);
       setIsExpired(false);
-      setPaymentId(null);
     }
   }, [open, remaining]);
 

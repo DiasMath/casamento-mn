@@ -3,16 +3,29 @@ import { MercadoPagoConfig, Payment } from "mercadopago";
 import admin from "firebase-admin";
 
 if (!admin.apps.length) {
-  const pk = process.env.FIREBASE_PRIVATE_KEY;
-  const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
+  try {
+    const pk = process.env.FIREBASE_PRIVATE_KEY;
+    const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: cleanKey,
-    }),
-  });
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !cleanKey) {
+      console.error("[CheckPayment] ❌ Env vars Firebase ausentes:", {
+        FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+        FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+        FIREBASE_PRIVATE_KEY: !!cleanKey,
+      });
+    }
+
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: cleanKey,
+      }),
+    });
+    console.log("[CheckPayment] ✓ Firebase Admin inicializado");
+  } catch (initError) {
+    console.error("[CheckPayment] ❌ Erro ao inicializar Firebase Admin:", initError);
+  }
 }
 
 const db = admin.firestore();
@@ -41,29 +54,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const contributorName = paymentData.metadata?.contributor_name || "Anônimo";
 
       if (giftId && value) {
-        const existing = await db
-          .collection("contributions")
-          .where("paymentId", "==", paymentData.id)
-          .limit(1)
-          .get();
+        const giftSnap = await db.collection("gifts").doc(giftId).get();
+        if (!giftSnap.exists) {
+          console.error(`[CheckPayment] Gift ${giftId} não encontrado no Firestore`);
+        } else {
+          const contributionRef = db
+            .collection("contributions")
+            .doc(String(paymentData.id));
+          const existingDoc = await contributionRef.get();
 
-        if (existing.empty) {
-          const giftRef = db.collection("gifts").doc(giftId);
+          if (!existingDoc.exists) {
+            const giftRef = db.collection("gifts").doc(giftId);
 
-          await giftRef.update({
-            raised: admin.firestore.FieldValue.increment(value),
-          });
+            await giftRef.update({
+              raised: admin.firestore.FieldValue.increment(value),
+            });
 
-          await db.collection("contributions").add({
-            giftId,
-            contributorName,
-            value,
-            date: admin.firestore.FieldValue.serverTimestamp(),
-            paymentId: paymentData.id,
-            method: "pix",
-          });
+            await contributionRef.set({
+              giftId,
+              contributorName,
+              value,
+              date: admin.firestore.FieldValue.serverTimestamp(),
+              paymentId: paymentData.id,
+              method: "pix",
+            });
 
-          console.log(`[CheckPayment] Pagamento processado via polling: R$ ${value} → ${giftId}`);
+            console.log(`[CheckPayment] Pagamento processado via polling: R$ ${value} → ${giftId}`);
+          } else {
+            console.log(`[CheckPayment] Pagamento ${paymentData.id} já processado`);
+          }
         }
       }
     }

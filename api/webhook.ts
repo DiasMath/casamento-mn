@@ -5,16 +5,29 @@ import crypto from "crypto";
 
 // Inicializa o Firebase Admin apenas se ainda não estiver inicializado
 if (!admin.apps.length) {
-  const pk = process.env.FIREBASE_PRIVATE_KEY;
-  const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
+  try {
+    const pk = process.env.FIREBASE_PRIVATE_KEY;
+    const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: cleanKey,
-    }),
-  });
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !cleanKey) {
+      console.error("[Webhook] ❌ Env vars Firebase ausentes:", {
+        FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+        FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+        FIREBASE_PRIVATE_KEY: !!cleanKey,
+      });
+    }
+
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: cleanKey,
+      }),
+    });
+    console.log("[Webhook] ✓ Firebase Admin inicializado");
+  } catch (initError) {
+    console.error("[Webhook] ❌ Erro ao inicializar Firebase Admin:", initError);
+  }
 }
 
 const db = admin.firestore();
@@ -171,14 +184,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           paymentData.metadata?.contributor_name || "Anônimo";
 
         if (giftId && value) {
-          // Verificar se já processamos este pagamento (proteção contra duplicidade)
-          const existing = await db
+          // Usar paymentId como doc ID para prevenir race condition
+          // Se o doc já existe, é duplicata — ignorar
+          const contributionRef = db
             .collection("contributions")
-            .where("paymentId", "==", paymentData.id)
-            .limit(1)
-            .get();
+            .doc(String(paymentData.id));
+          const existingDoc = await contributionRef.get();
 
-          if (!existing.empty) {
+          if (existingDoc.exists) {
             console.log(
               "[Webhook] Pagamento já processado, ignorando:",
               paymentData.id,
@@ -199,8 +212,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             raised: admin.firestore.FieldValue.increment(value),
           });
 
-          // 2. Salva um registro na coleção de contribuições para o painel de controle
-          await db.collection("contributions").add({
+          // 2. Salva um registro na coleção de contribuições (doc ID = paymentId)
+          await contributionRef.set({
             giftId,
             contributorName,
             value,
