@@ -114,13 +114,14 @@ export function EditGiftDialog({
             />
           </div>
           <div>
-            <Label htmlFor="g-image">URL da imagem</Label>
+            <Label htmlFor="g-title">Nome do Presente</Label>
             <Input
-              id="g-image"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
+              id="g-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="h-11 rounded-xl mt-1.5"
               required
+              placeholder="Ex: Jogo de Pratos"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
