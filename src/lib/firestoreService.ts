@@ -335,12 +335,29 @@ export const addRSVP = async (
 };
 
 /**
- * Imagens do site (hero, capítulos da história)
+ * Imagens do site
+ * - carousel1–6: imagens do carrossel hero
+ * - story1–4: imagens dos capítulos (NossaHistoria)
  */
-export type SiteImageKey = "hero" | "story1" | "story2" | "story3" | "story4";
+export type SiteImageKey =
+  | "carousel1"
+  | "carousel2"
+  | "carousel3"
+  | "carousel4"
+  | "carousel5"
+  | "carousel6"
+  | "story1"
+  | "story2"
+  | "story3"
+  | "story4";
 
 export interface SiteImages {
-  hero: string;
+  carousel1: string;
+  carousel2: string;
+  carousel3: string;
+  carousel4: string;
+  carousel5: string;
+  carousel6: string;
   story1: string;
   story2: string;
   story3: string;
@@ -348,7 +365,12 @@ export interface SiteImages {
 }
 
 export const SITE_IMAGE_DEFAULTS: SiteImages = {
-  hero: "",
+  carousel1: "",
+  carousel2: "",
+  carousel3: "",
+  carousel4: "",
+  carousel5: "",
+  carousel6: "",
   story1: "",
   story2: "",
   story3: "",

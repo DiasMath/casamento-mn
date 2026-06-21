@@ -1,5 +1,9 @@
-import { useState, useEffect } from "react";
-import heroImgFallback from "@/assets/hero-couple.jpg";
+import { useState, useEffect, useCallback } from "react";
+import c1Fallback from "@/assets/hero-couple.jpg";
+import c2Fallback from "@/assets/story-1.jpg";
+import c3Fallback from "@/assets/story-2.jpg";
+import c4Fallback from "@/assets/story-3.jpg";
+import c5Fallback from "@/assets/story-4.jpg";
 import { COUPLE, WEDDING_DATE } from "@/lib/constants";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
 import { getSiteImages } from "@/lib/firestoreService";
@@ -10,28 +14,69 @@ const dateStr = WEDDING_DATE.toLocaleDateString("pt-BR", {
   year: "numeric",
 });
 
+const INTERVAL = 3000;
+
+const FALLBACKS = [
+  c1Fallback,
+  c2Fallback,
+  c3Fallback,
+  c4Fallback,
+  c5Fallback,
+  c1Fallback,
+];
+
 export function Hero() {
-  const [heroSrc, setHeroSrc] = useState<string>(heroImgFallback);
+  const [images, setImages] = useState<string[]>(FALLBACKS);
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     getSiteImages().then((imgs) => {
-      if (imgs.hero) setHeroSrc(imgs.hero);
+      const list = [
+        imgs.carousel1 || FALLBACKS[0],
+        imgs.carousel2 || FALLBACKS[1],
+        imgs.carousel3 || FALLBACKS[2],
+        imgs.carousel4 || FALLBACKS[3],
+        imgs.carousel5 || FALLBACKS[4],
+        imgs.carousel6 || FALLBACKS[5],
+      ];
+      if (list.some((img, i) => img !== images[i])) setImages(list);
     });
   }, []);
+
+  const next = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % images.length);
+  }, [images.length]);
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(next, INTERVAL);
+    return () => clearInterval(id);
+  }, [next, paused]);
 
   return (
     <section
       id="save-date"
       className="relative min-h-[88vh] flex items-center justify-center overflow-hidden"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
-      <img
-        src={heroSrc}
-        alt="Foto dos noivos"
-        width={1536}
-        height={1024}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/90" />
+      {images.map((src, i) => (
+        <img
+          key={`${src}-${i}`}
+          src={src}
+          alt="Foto dos noivos"
+          width={1536}
+          height={1024}
+          loading={i === 0 ? "eager" : "lazy"}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
+            i === current ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/50 via-background/30 to-background/90" />
+
       <Branch
         className="absolute top-0 left-0 z-10"
         size={140}
@@ -104,6 +149,7 @@ export function Hero() {
         rotate={-10}
         opacity={0.35}
       />
+
       <div className="relative z-10 px-6 text-center max-w-2xl">
         <p className="uppercase tracking-[0.4em] text-xs sm:text-sm text-primary-foreground/80 bg-primary/70 inline-block px-4 py-1.5 rounded-full backdrop-blur">
           Save the Date
@@ -124,6 +170,21 @@ export function Hero() {
         <p className="mt-6 text-sm text-muted-foreground italic max-w-md mx-auto">
           "E que assim seja, para todo o sempre."
         </p>
+
+        <div className="flex justify-center gap-2 mt-8">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === current
+                  ? "bg-foreground w-6"
+                  : "bg-foreground/40 w-2 hover:bg-foreground/60"
+              }`}
+              aria-label={`Imagem ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
