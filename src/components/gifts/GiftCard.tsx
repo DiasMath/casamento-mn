@@ -1,5 +1,5 @@
 import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,15 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const [simulating, setSimulating] = useState(false);
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [confirmedValue, setConfirmedValue] = useState(0);
+
+  useEffect(() => {
+    setLocalGift((prev) => {
+      if (gift.raised > prev.raised || gift.total !== prev.total) {
+        return gift;
+      }
+      return prev;
+    });
+  }, [gift.raised, gift.total]);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;

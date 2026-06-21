@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Gift } from "@/lib/firestoreService";
 
 /**
@@ -10,6 +10,16 @@ export function useGiftPayment(gift: Gift) {
   const [payOpen, setPayOpen] = useState(false);
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [confirmedValue, setConfirmedValue] = useState(0);
+
+  // Sincroniza com o prop do Firestore quando atualizado (webhook/polling)
+  useEffect(() => {
+    setLocalGift((prev) => {
+      if (gift.raised > prev.raised || gift.total !== prev.total) {
+        return gift;
+      }
+      return prev;
+    });
+  }, [gift.raised, gift.total]);
 
   const handlePaymentSuccess = useCallback((value: number) => {
     setLocalGift((prev) => ({
