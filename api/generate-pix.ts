@@ -38,6 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const baseUrl = `${protocol}://${host}`;
 
     // 2. Monta o corpo da requisição
+    // Nota: payer.email é obrigatório pela API do Mercado Pago para PIX,
+    // mesmo que o convidado não informe. Usamos um email genérico.
     const body = {
       transaction_amount: Number(amount),
       description: `Presente: ${description}`,

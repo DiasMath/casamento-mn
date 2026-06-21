@@ -32,7 +32,7 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/80 border-b border-border/60">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />
           <span className="font-script text-xl tracking-wide text-foreground whitespace-nowrap">
@@ -40,7 +40,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-5">
+        <nav className="hidden md:flex items-center gap-5 ml-auto">
           {links.map((l) => (
             <a
               key={l.label}
@@ -54,7 +54,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-2 ml-auto">
           <Link
             to="/present-list"
             className="px-4 py-2 text-sm font-medium rounded-full bg-accent text-accent-foreground"

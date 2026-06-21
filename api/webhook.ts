@@ -170,6 +170,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           paymentData.metadata?.contributor_name || "Anônimo";
 
         if (giftId && value) {
+          // Verificar se já processamos este pagamento (proteção contra duplicidade)
+          const existing = await db
+            .collection("contributions")
+            .where("paymentId", "==", paymentData.id)
+            .limit(1)
+            .get();
+
+          if (!existing.empty) {
+            console.log(
+              "[Webhook] Pagamento já processado, ignorando:",
+              paymentData.id,
+            );
+            return res.status(200).send("OK");
+          }
+
           console.log("[Webhook] Processando pagamento:", {
             giftId,
             value,
@@ -189,7 +204,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             contributorName,
             value,
             date: admin.firestore.FieldValue.serverTimestamp(),
-            paymentId: paymentData.id, // Salva o ID da transação para controle
+            paymentId: paymentData.id,
             method: "pix",
           });
 
