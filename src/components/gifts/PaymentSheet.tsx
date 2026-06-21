@@ -40,7 +40,7 @@ export function PaymentSheet({
     qr_code: string;
     qr_code_base64: string;
   } | null>(null);
-  const [expiresIn, setExpiresIn] = useState(3600); // 1 hora em segundos
+  const [expiresIn, setExpiresIn] = useState(900); // 15 minutos em segundos
 
   // Estados de confirmação de pagamento
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -54,7 +54,7 @@ export function PaymentSheet({
       setName("");
       setStep("form");
       setPixData(null);
-      setExpiresIn(3600);
+      setExpiresIn(900);
       setPaymentConfirmed(false);
       setConfirmedValue(0);
       setIsExpired(false);
@@ -64,7 +64,7 @@ export function PaymentSheet({
   // Função para voltar ao estado inicial
   const handleCancelPix = () => {
     setPixData(null);
-    setExpiresIn(3600);
+    setExpiresIn(900);
     setStep("form");
   };
 

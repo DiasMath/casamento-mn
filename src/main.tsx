@@ -11,6 +11,7 @@ import { Index } from "./routes/index";
 import { PresentList } from "./routes/present-list";
 import { AdminLogin } from "./routes/admin.login";
 import { AdminPainel } from "./routes/admin.painel";
+import { ChaDePanela } from "./routes/cha-de-panela";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ createRoot(rootElement).render(
           <Route path="/present-list" element={<PresentList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/painel" element={<AdminPainel />} />
+          <Route path="/cha-de-panela" element={<ChaDePanela />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

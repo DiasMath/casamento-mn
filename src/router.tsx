@@ -23,6 +23,9 @@ const AdminLogin = lazy(() =>
 const AdminPainel = lazy(() =>
   import("./routes/admin.painel").then((m) => ({ default: m.AdminPainel })),
 );
+const ChaDePanela = lazy(() =>
+  import("./routes/cha-de-panela").then((m) => ({ default: m.ChaDePanela })),
+);
 
 export const queryClient = new QueryClient();
 
@@ -82,6 +85,7 @@ export const router = createBrowserRouter([
       { path: "/present-list", element: <PresentList /> },
       { path: "/admin/login", element: <AdminLogin /> },
       { path: "/admin/painel", element: <AdminPainel /> },
+      { path: "/cha-de-panela", element: <ChaDePanela /> },
     ],
   },
   { path: "*", element: <NotFound /> },
