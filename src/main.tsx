@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import "./styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
@@ -49,7 +49,7 @@ createRoot(rootElement).render(
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/cha-de-panela" replace />} />
           <Route path="/present-list" element={<PresentList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/painel" element={<AdminPainel />} />
