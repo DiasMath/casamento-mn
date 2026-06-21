@@ -1,17 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { MercadoPagoConfig, Payment } from "mercadopago";
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 import crypto from "crypto";
 
 // Inicializa o Firebase Admin apenas se ainda não estiver inicializado
 if (!admin.apps.length) {
+  const pk = process.env.FIREBASE_PRIVATE_KEY;
+  const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
+
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      // O replace é necessário porque chaves privadas em variáveis de ambiente
-      // muitas vezes perdem a quebra de linha real
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      privateKey: cleanKey,
     }),
   });
 }

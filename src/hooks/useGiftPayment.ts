@@ -8,12 +8,17 @@ import type { Gift } from "@/lib/firestoreService";
 export function useGiftPayment(gift: Gift) {
   const [localGift, setLocalGift] = useState(gift);
   const [payOpen, setPayOpen] = useState(false);
+  const [thankYouOpen, setThankYouOpen] = useState(false);
+  const [confirmedValue, setConfirmedValue] = useState(0);
 
   const handlePaymentSuccess = useCallback((value: number) => {
     setLocalGift((prev) => ({
       ...prev,
       raised: prev.raised + value,
     }));
+    setConfirmedValue(value);
+    setPayOpen(false);
+    setThankYouOpen(true);
   }, []);
 
   const resetGift = useCallback(() => {
@@ -25,6 +30,9 @@ export function useGiftPayment(gift: Gift) {
     setLocalGift,
     payOpen,
     setPayOpen,
+    thankYouOpen,
+    setThankYouOpen,
+    confirmedValue,
     handlePaymentSuccess,
     resetGift,
   };

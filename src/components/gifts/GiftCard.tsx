@@ -10,6 +10,7 @@ import { Gift, toggleGiftVisibility } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
+import { ThankYouSheet } from "./ThankYouSheet";
 import { toast } from "sonner";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
@@ -26,6 +27,8 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
   const [localGift, setLocalGift] = useState(gift);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [thankYouOpen, setThankYouOpen] = useState(false);
+  const [confirmedValue, setConfirmedValue] = useState(0);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
@@ -35,6 +38,9 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
       ...prev,
       raised: prev.raised + value,
     }));
+    setConfirmedValue(value);
+    setPayOpen(false);
+    setThankYouOpen(true);
     onUpdate();
   };
 
@@ -244,6 +250,12 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
         open={payOpen}
         onOpenChange={setPayOpen}
         onPaymentSuccess={handlePaymentSuccess}
+      />
+      <ThankYouSheet
+        open={thankYouOpen}
+        onOpenChange={setThankYouOpen}
+        value={confirmedValue}
+        giftName={localGift.title}
       />
     </>
   );

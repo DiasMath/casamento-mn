@@ -5,6 +5,7 @@ import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { Gift } from "@/lib/firestoreService";
 import { PaymentSheet } from "./PaymentSheet";
+import { ThankYouSheet } from "./ThankYouSheet";
 import { useGiftPayment } from "@/hooks/useGiftPayment";
 import { GIFT_CATEGORIES } from "@/lib/constants";
 
@@ -13,8 +14,15 @@ interface GiftCardPublicProps {
 }
 
 export function GiftCardPublic({ gift }: GiftCardPublicProps) {
-  const { localGift, payOpen, setPayOpen, handlePaymentSuccess } =
-    useGiftPayment(gift);
+  const {
+    localGift,
+    payOpen,
+    setPayOpen,
+    thankYouOpen,
+    setThankYouOpen,
+    confirmedValue,
+    handlePaymentSuccess,
+  } = useGiftPayment(gift);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
@@ -90,6 +98,12 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
         open={payOpen}
         onOpenChange={setPayOpen}
         onPaymentSuccess={handlePaymentSuccess}
+      />
+      <ThankYouSheet
+        open={thankYouOpen}
+        onOpenChange={setThankYouOpen}
+        value={confirmedValue}
+        giftName={localGift.title}
       />
     </>
   );
