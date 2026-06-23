@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChaLayout } from "@/components/layout/ChaLayout";
+import { ChaHero } from "@/components/cha/ChaHero";
+import { ChaDetails } from "@/components/cha/ChaDetails";
+import { ChaCountdown } from "@/components/cha/ChaCountdown";
 import { devLog } from "@/lib/devLog";
 import { GiftCard } from "@/components/gifts/GiftCard";
 import { AddGiftFAB } from "@/components/gifts/AddGiftFAB";
@@ -9,6 +12,7 @@ import type { GiftFiltersState } from "@/components/gifts/GiftFilters";
 import { getGifts, getVisibleGifts, Gift } from "@/lib/firestoreService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Branch } from "@/components/decor/Flower";
 
 export function ChaDePanela() {
   const { isAdmin } = useAuth();
@@ -46,7 +50,9 @@ export function ChaDePanela() {
       if (payment === "success") {
         toast.success("Pagamento confirmado! Obrigado pelo carinho!");
       } else if (payment === "pending") {
-        toast.info("Pagamento pendente. Assim que for confirmado, atualizaremos a lista!");
+        toast.info(
+          "Pagamento pendente. Assim que for confirmado, atualizaremos a lista!",
+        );
       } else if (payment === "failure") {
         toast.error("Pagamento não foi concluído. Tente novamente.");
       }
@@ -72,43 +78,65 @@ export function ChaDePanela() {
 
   return (
     <ChaLayout>
-      <section className="px-4 pt-10 pb-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="font-script text-3xl text-primary">chá de panela</p>
-          <h1 className="text-3xl sm:text-4xl font-semibold mt-2">
-            Lista de Presentes
-          </h1>
-          <p className="mt-4 text-foreground/70 max-w-xl mx-auto">
-            Gerencie a lista de presentes diretamente por aqui.
-          </p>
-        </div>
-      </section>
+      <ChaHero />
 
-      <section className="px-4 pb-20">
-        {loading ? (
-          <div className="flex justify-center py-20">Carregando...</div>
-        ) : (
-          <div className="max-w-6xl mx-auto space-y-6">
-            <GiftFilters
-              filters={filters}
-              onFilterChange={setFilters}
-              isAdmin={isAdmin}
-            />
-            {filteredGifts.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="text-sm">
-                  Nenhum presente encontrado com os filtros selecionados.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredGifts.map((g) => (
-                  <GiftCard key={g.id} gift={g} onUpdate={fetchGifts} />
-                ))}
-              </div>
-            )}
+      <ChaDetails />
+
+      <ChaCountdown />
+
+      <section className="relative px-4 py-16 sm:py-20">
+        <Branch
+          className="absolute top-0 right-0 hidden sm:block"
+          size={120}
+          rotate={165}
+          opacity={0.25}
+        />
+        <Branch
+          className="absolute bottom-0 left-0 hidden sm:block"
+          size={120}
+          rotate={-5}
+          opacity={0.25}
+        />
+
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="font-script text-3xl sm:text-4xl text-primary">
+              nossa lista
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-2">
+              Presentes
+            </h2>
+            <p className="mt-3 text-foreground/70 max-w-xl mx-auto">
+              Sua presença é o maior presente, mas se quiser nos ajudar a
+              montar nosso lar, ficaremos muito felizes!
+            </p>
           </div>
-        )}
+
+          {loading ? (
+            <div className="flex justify-center py-20">Carregando...</div>
+          ) : (
+            <div className="space-y-6">
+              <GiftFilters
+                filters={filters}
+                onFilterChange={setFilters}
+                isAdmin={isAdmin}
+              />
+              {filteredGifts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p className="text-sm">
+                    Nenhum presente encontrado com os filtros selecionados.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredGifts.map((g) => (
+                    <GiftCard key={g.id} gift={g} onUpdate={fetchGifts} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       {isAdmin && <AddGiftFAB onGiftAdded={fetchGifts} />}

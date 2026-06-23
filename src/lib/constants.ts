@@ -14,6 +14,13 @@ export const WEDDING_VENUE = {
   city: "Itaipava, RJ",
 } as const;
 
+export const CHA_DATE = new Date("2026-09-30T14:00:00");
+
+export const CHA_VENUE = {
+  address: "Rua Parintis, 516",
+  city: "RJ",
+} as const;
+
 export const GIFT_CATEGORIES: {
   value: GiftCategory;
   label: string;
