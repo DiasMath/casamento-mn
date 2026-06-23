@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { devLog } from "@/lib/devLog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
@@ -26,7 +27,7 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    devLog.error("ErrorBoundary caught:", error, errorInfo);
   }
 
   handleReset = () => {

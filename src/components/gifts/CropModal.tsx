@@ -1,11 +1,13 @@
 import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop";
+import { devLog } from "@/lib/devLog";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -46,7 +48,7 @@ export function CropModal({
         onClose();
       }
     } catch (error) {
-      console.error("Erro ao processar imagem:", error);
+      devLog.error("Erro ao processar imagem:", error);
     } finally {
       setProcessing(false);
     }
@@ -59,6 +61,9 @@ export function CropModal({
           <DialogTitle className="font-script text-3xl">
             Recortar Imagem
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Recorte a imagem do presente em formato 16:9
+          </DialogDescription>
         </DialogHeader>
 
         <div className="relative w-full aspect-video bg-black">

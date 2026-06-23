@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { devLog } from "@/lib/devLog";
 import {
   TrendingUp,
   Users,
@@ -53,14 +54,11 @@ export function AdminPainel() {
         getRSVPs(),
         getContributions(),
       ]);
-      console.log("[AdminPainel] Gifts carregados:", giftList);
-      console.log("[AdminPainel] RSVPs carregados:", rsvpList);
-      console.log("[AdminPainel] Contributions carregadas:", contribList);
       setGifts(giftList);
       setRsvps(rsvpList);
       setContributions(contribList);
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
+      devLog.error("Erro ao carregar dados:", error);
     } finally {
       setLoadingData(false);
     }
@@ -95,7 +93,7 @@ export function AdminPainel() {
     );
   }
 
-  // Cálculos de Presentes
+  // Cálculos de Presentes (bruto)
   const totalRaised = gifts.reduce((s, g) => s + g.raised, 0);
   const totalGoal = gifts.reduce((s, g) => s + g.total, 0);
   const remainingValue = Math.max(0, totalGoal - totalRaised);
@@ -103,6 +101,13 @@ export function AdminPainel() {
     totalGoal > 0
       ? Math.min(100, Math.round((totalRaised / totalGoal) * 100))
       : 0;
+
+  // Valor líquido (desconta 1% de taxa do PIX)
+  const totalNet = contributions.reduce((s, c) => {
+    const fee = c.method === "pix" ? 0.01 : 0;
+    return s + c.value * (1 - fee);
+  }, 0);
+  const remainingNet = Math.max(0, totalGoal - Math.round(totalNet));
 
   const guaranteedGifts = gifts.filter((g) => g.raised >= g.total).length;
   const giftsInProgress = gifts.filter(
@@ -126,8 +131,14 @@ export function AdminPainel() {
       value: brl(totalRaised),
       icon: TrendingUp,
       showPct: true,
+      subtext: `Líquido: ${brl(Math.round(totalNet))}`,
     },
-    { label: "Valor Restante", value: brl(remainingValue), icon: Wallet },
+    {
+      label: "Valor Restante",
+      value: brl(remainingValue),
+      icon: Wallet,
+      subtext: `Líquido: ${brl(remainingNet)}`,
+    },
     {
       label: "Status dos Presentes",
       value: `${gifts.length} Total`,

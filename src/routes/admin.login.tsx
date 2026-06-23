@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { devLog } from "@/lib/devLog";
 import { Heart, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,7 @@ export function AdminLogin() {
       toast.success("Bem-vindo(a) ao painel!");
       // The redirect will happen via the useEffect above when user changes
     } catch (error: any) {
-      console.error("Login error:", error);
+      devLog.error("Login error:", error);
       if (
         error.code === "auth/invalid-email" ||
         error.code === "auth/user-disabled" ||

@@ -6,6 +6,7 @@ import {
   type ReactNode,
   useCallback,
 } from "react";
+import { devLog } from "@/lib/devLog";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth"; // Importamos o signOut estaticamente
 import { auth, ADMIN_EMAIL } from "@/lib/firebase";
 
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth); // Usamos a função estática
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      devLog.error("Logout error:", error);
     }
   }, []);
 

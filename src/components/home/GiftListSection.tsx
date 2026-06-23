@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getVisibleGifts, Gift } from "@/lib/firestoreService";
+import { devLog } from "@/lib/devLog";
 // IMPORTAR O NOVO CARD PÚBLICO AQUI
 import { GiftCardPublic } from "@/components/gifts/GiftCardPublic";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export function GiftListSection() {
       // Mostramos os primeiros 8 presentes na Home (já que 4 cabem por linha agora)
       setGifts(data.slice(0, 8));
     } catch (error) {
-      console.error("Erro ao carregar presentes:", error);
+      devLog.error("Erro ao carregar presentes:", error);
     } finally {
       setLoading(false);
     }

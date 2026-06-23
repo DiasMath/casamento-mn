@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -93,6 +94,9 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
           <DialogTitle className="font-script text-3xl">
             Novo Presente
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Adicione um novo presente à lista
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleAdd} className="space-y-4">
           <div>

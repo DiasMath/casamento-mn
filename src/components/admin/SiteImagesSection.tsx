@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ImagePlus, Check, Loader2, Images, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { devLog } from "@/lib/devLog";
 import {
   getSiteImages,
   updateSiteImage,
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -158,7 +160,7 @@ export function SiteImagesDialog() {
       setImages((prev) => ({ ...prev, [key]: url }));
       toast.success(`${IMAGE_LABELS[key]} atualizada!`);
     } catch (err) {
-      console.error(err);
+      devLog.error(err);
       toast.error("Erro ao enviar imagem.");
     } finally {
       setUploading(null);
@@ -177,6 +179,9 @@ export function SiteImagesDialog() {
           <DialogTitle className="flex items-center gap-2">
             <Images className="w-5 h-5" /> Imagens do Site
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Gerencie as imagens do carrossel e da história do site
+          </DialogDescription>
         </DialogHeader>
         {loading ? (
           <div className="py-8 text-center text-muted-foreground">

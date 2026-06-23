@@ -1,5 +1,6 @@
 import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { devLog } from "@/lib/devLog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,7 +88,7 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
       setLocalGift((prev) => ({ ...prev, hidden: newHidden }));
       toast.success(newHidden ? "Presente ocultado" : "Presente visível");
     } catch (error) {
-      console.error("Erro ao alterar visibilidade:", error);
+      devLog.error("Erro ao alterar visibilidade:", error);
       toast.error("Erro ao alterar visibilidade");
     } finally {
       setTogglingVisibility(false);

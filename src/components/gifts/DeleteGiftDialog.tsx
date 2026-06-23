@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { devLog } from "@/lib/devLog";
 import { toast } from "sonner";
 import { deleteGift } from "@/lib/firestoreService";
 
@@ -35,7 +36,7 @@ export function DeleteGiftDialog({
       // 3. Informa o componente pai (AdminPainel) que terminou para atualizar a lista
       await onGiftDeleted();
     } catch (error: any) {
-      console.error("Error deleting gift:", error);
+      devLog.error("Error deleting gift:", error);
       toast.error(error.message || "Erro ao excluir presente");
     } finally {
       onOpenChange(false);

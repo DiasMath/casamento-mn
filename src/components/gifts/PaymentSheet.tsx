@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { devLog } from "@/lib/devLog";
 import {
   Sheet,
   SheetContent,
@@ -184,7 +185,7 @@ export function PaymentSheet({
       setStep("pix");
       toast.success("PIX gerado com sucesso!");
     } catch (error) {
-      console.error(error);
+      devLog.error(error);
       toast.error("Erro ao gerar pagamento. Tente novamente.");
     } finally {
       setLoading(false);
@@ -216,7 +217,7 @@ export function PaymentSheet({
 
       window.location.href = data.checkout_url;
     } catch (error) {
-      console.error(error);
+      devLog.error(error);
       toast.error("Erro ao redirecionar. Tente novamente.");
       setCardLoading(false);
     }

@@ -1,4 +1,5 @@
 import { db } from "./firebase";
+import { devLog } from "./devLog";
 import {
   collection,
   addDoc,
@@ -59,6 +60,7 @@ export interface Contribution {
   giftTitle: string;
   contributorName: string;
   value: number;
+  paymentMethod?: string;
   date: Timestamp;
 }
 
@@ -252,7 +254,7 @@ export const subscribeMessages = (
       callback(messages);
     },
     (error) => {
-      console.error("Erro no listener de recados:", error);
+      devLog.error("Erro no listener de recados:", error);
       onError?.(error);
     },
   );
@@ -297,6 +299,7 @@ export const registerContribution = async (
   giftId: string,
   value: number,
   contributorName: string,
+  paymentMethod?: string,
 ) => {
   const db = getDb();
 
@@ -306,6 +309,7 @@ export const registerContribution = async (
     giftTitle: "", // opcional: salvar o título para facilitar a leitura no admin
     contributorName: contributorName || "Anônimo",
     value,
+    paymentMethod: paymentMethod || "pix",
     date: serverTimestamp(),
   });
 
@@ -388,7 +392,7 @@ export const getSiteImages = async (): Promise<SiteImages> => {
       return { ...SITE_IMAGE_DEFAULTS, ...data } as SiteImages;
     }
   } catch (error) {
-    console.error("Erro ao buscar imagens do site:", error);
+    devLog.error("Erro ao buscar imagens do site:", error);
   }
   return SITE_IMAGE_DEFAULTS;
 };

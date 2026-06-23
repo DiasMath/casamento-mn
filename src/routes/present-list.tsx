@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { devLog } from "@/lib/devLog";
 import { GiftCard } from "@/components/gifts/GiftCard";
 import { AddGiftFAB } from "@/components/gifts/AddGiftFAB";
 import { GiftFilters } from "@/components/gifts/GiftFilters";
@@ -26,7 +27,7 @@ export function PresentList() {
       const data = isAdmin ? await getGifts() : await getVisibleGifts();
       setGifts(data);
     } catch (error) {
-      console.error("Erro ao carregar presentes:", error);
+      devLog.error("Erro ao carregar presentes:", error);
     } finally {
       setLoading(false);
     }

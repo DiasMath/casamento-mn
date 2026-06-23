@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { devLog } from "@/lib/devLog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,7 @@ export function RSVP() {
         description: `Obrigado, ${name.split(" ")[0]}.`,
       });
     } catch (error) {
-      console.error("Erro ao confirmar presença:", error);
+      devLog.error("Erro ao confirmar presença:", error);
       toast.error("Erro ao confirmar. Tente novamente.");
     } finally {
       setIsSubmitting(false);

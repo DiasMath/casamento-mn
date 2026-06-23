@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { devLog } from "@/lib/devLog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,7 +66,7 @@ export function Recados() {
       setText("");
       toast.success("Recado enviado! 💛");
     } catch (error) {
-      console.error("Erro ao enviar recado:", error);
+      devLog.error("Erro ao enviar recado:", error);
       toast.error("Erro ao enviar. Tente novamente.");
     } finally {
       setIsSubmitting(false);

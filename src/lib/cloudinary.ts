@@ -1,11 +1,11 @@
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
 /**
  * Faz upload de um Blob para o Cloudinary via unsigned preset.
  * Retorna a URL HTTPS permanente da imagem.
  */
 export async function uploadToCloudinary(blob: Blob): Promise<string> {
+  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error(
       "Variáveis de ambiente do Cloudinary não configuradas. " +

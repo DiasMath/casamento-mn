@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChaLayout } from "@/components/layout/ChaLayout";
+import { devLog } from "@/lib/devLog";
 import { GiftCard } from "@/components/gifts/GiftCard";
 import { AddGiftFAB } from "@/components/gifts/AddGiftFAB";
 import { GiftFilters } from "@/components/gifts/GiftFilters";
@@ -28,7 +29,7 @@ export function ChaDePanela() {
       const data = isAdmin ? await getGifts() : await getVisibleGifts();
       setGifts(data);
     } catch (error) {
-      console.error("Erro ao carregar presentes:", error);
+      devLog.error("Erro ao carregar presentes:", error);
     } finally {
       setLoading(false);
     }

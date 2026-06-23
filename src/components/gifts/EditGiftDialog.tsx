@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { devLog } from "@/lib/devLog";
 import {
   Dialog,
   DialogContent,
@@ -82,7 +83,7 @@ export function EditGiftDialog({
       await onGiftUpdated();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error updating gift:", error);
+      devLog.error("Error updating gift:", error);
       toast.error(error.message || "Erro ao atualizar presente");
     }
   };

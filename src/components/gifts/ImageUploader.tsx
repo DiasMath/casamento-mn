@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from "react";
+import { devLog } from "@/lib/devLog";
 import { CropModal } from "./CropModal";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export function ImageUploader({
         onUpload(cloudinaryUrl);
         toast.success("Imagem enviada com sucesso!");
       } catch (error) {
-        console.error("Erro no upload:", error);
+        devLog.error("Erro no upload:", error);
         toast.error("Erro ao enviar imagem. Tente novamente.");
       } finally {
         setUploading(false);
