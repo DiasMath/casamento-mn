@@ -1,29 +1,28 @@
 import { useRef, useState, useCallback } from "react";
 import { devLog } from "@/lib/devLog";
 import { CropModal } from "./CropModal";
-import { uploadToCloudinary } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, ImageIcon, X } from "lucide-react";
-import { toast } from "sonner";
 
 interface ImageUploaderProps {
   value?: string;
-  onUpload: (url: string) => void;
+  onFileReady: (blob: Blob | null) => void;
+  hasNewFile?: boolean;
   disabled?: boolean;
 }
 
 export function ImageUploader({
   value,
-  onUpload,
+  onFileReady,
+  hasNewFile = false,
   disabled,
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  const displayUrl = value || previewUrl;
+  const displayUrl = hasNewFile ? previewUrl : value;
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,12 +30,10 @@ export function ImageUploader({
       if (!file) return;
 
       if (!file.type.startsWith("image/")) {
-        toast.error("Selecione um arquivo de imagem válido.");
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        toast.error("A imagem deve ter no máximo 10MB.");
         return;
       }
 
@@ -52,27 +49,28 @@ export function ImageUploader({
   );
 
   const handleCropComplete = useCallback(
-    async (blob: Blob) => {
-      setUploading(true);
-      try {
-        const cloudinaryUrl = await uploadToCloudinary(blob);
-        setPreviewUrl(cloudinaryUrl);
-        onUpload(cloudinaryUrl);
-        toast.success("Imagem enviada com sucesso!");
-      } catch (error) {
-        devLog.error("Erro no upload:", error);
-        toast.error("Erro ao enviar imagem. Tente novamente.");
-      } finally {
-        setUploading(false);
+    (blob: Blob) => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
       }
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      onFileReady(blob);
     },
-    [onUpload],
+    [onFileReady, previewUrl],
   );
 
   const handleRemove = useCallback(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl(null);
-    onUpload("");
-  }, [onUpload]);
+    onFileReady(null);
+  }, [onFileReady, previewUrl]);
+
+  const handleOpenFilePicker = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -98,48 +96,36 @@ export function ImageUploader({
               type="button"
               size="sm"
               variant="secondary"
-              onClick={() => inputRef.current?.click()}
-              disabled={disabled || uploading}
+              onClick={handleOpenFilePicker}
+              disabled={disabled}
               className="rounded-full"
             >
-              {uploading ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-1" />
-              ) : (
-                <Upload className="w-4 h-4 mr-1" />
-              )}
+              <Upload className="w-4 h-4 mr-1" />
               Trocar
             </Button>
-            {!value && (
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                onClick={handleRemove}
-                disabled={disabled || uploading}
-                className="rounded-full"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Remover
-              </Button>
-            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={disabled}
+              className="rounded-full"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Remover
+            </Button>
           </div>
         </div>
       ) : (
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled || uploading}
+          onClick={handleOpenFilePicker}
+          disabled={disabled}
           className="w-full aspect-video rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-3 text-primary/60 hover:text-primary/80"
         >
-          {uploading ? (
-            <Loader2 className="w-10 h-10 animate-spin" />
-          ) : (
-            <ImageIcon className="w-10 h-10" />
-          )}
+          <ImageIcon className="w-10 h-10" />
           <div className="text-center">
-            <p className="text-sm font-medium">
-              {uploading ? "Enviando..." : "Clique para selecionar"}
-            </p>
+            <p className="text-sm font-medium">Clique para selecionar</p>
             <p className="text-xs text-muted-foreground mt-1">
               JPG, PNG ou WebP (máx. 10MB)
             </p>

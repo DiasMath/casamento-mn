@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addGift } from "@/lib/firestoreService";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
 import { ImageUploader } from "./ImageUploader";
@@ -33,7 +34,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [marca, setMarca] = useState("");
-  const [image, setImage] = useState("");
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [total, setTotal] = useState("");
   const [category, setCategory] = useState<GiftCategory>("outros");
   const [priority, setPriority] = useState<GiftPriority>("media");
@@ -43,9 +44,15 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { validTitle, validImage, totalNum, validMarca } = validateGiftData(
+      let imageUrl = "";
+
+      if (imageBlob) {
+        imageUrl = await uploadToCloudinary(imageBlob);
+      }
+
+      const { validTitle, totalNum, validMarca } = validateGiftData(
         title,
-        image,
+        imageUrl,
         total,
         undefined,
         marca,
@@ -54,7 +61,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       await addGift({
         title: validTitle,
         marca: validMarca,
-        image: validImage,
+        image: imageUrl,
         total: totalNum,
         raised: 0,
         hidden: false,
@@ -65,10 +72,9 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       toast.success("Presente adicionado!");
       setOpen(false);
       onGiftAdded();
-      // Reset campos
       setTitle("");
       setMarca("");
-      setImage("");
+      setImageBlob(null);
       setTotal("");
       setCategory("outros");
       setPriority("media");
@@ -121,8 +127,8 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
           <div>
             <Label>Imagem do Presente</Label>
             <ImageUploader
-              value={image}
-              onUpload={setImage}
+              onFileReady={setImageBlob}
+              hasNewFile={imageBlob !== null}
               disabled={loading}
             />
           </div>

@@ -40,3 +40,14 @@ export async function uploadToCloudinary(blob: Blob): Promise<string> {
 export function isCloudinaryUrl(url: string): boolean {
   return url.startsWith("https://res.cloudinary.com/");
 }
+
+/**
+ * Extrai o public_id de uma URL do Cloudinary.
+ * Ex: "https://res.cloudinary.com/.../upload/v1234/casamento-presentes/abc.jpg"
+ *   → "casamento-presentes/abc"
+ */
+export function extractPublicId(url: string): string | null {
+  if (!isCloudinaryUrl(url)) return null;
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
+  return match ? match[1] : null;
+}

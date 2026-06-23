@@ -9,7 +9,10 @@ export function ChaLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/80 border-b border-border/60">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-center">
-          <Link to="/cha-de-panela" className="flex items-center gap-2 group cursor-pointer">
+          <Link
+            to="/cha-de-panela"
+            className="flex items-center gap-2 group cursor-pointer"
+          >
             <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />
             <span className="font-script text-xl tracking-wide text-foreground whitespace-nowrap">
               {COUPLE.groom} & {COUPLE.bride}
@@ -17,7 +20,7 @@ export function ChaLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
       </header>
-      <main className="flex-1 pt-16">{children}</main>
+      <main className="flex-1 pt-16 overflow-x-hidden">{children}</main>
       <Footer />
     </div>
   );

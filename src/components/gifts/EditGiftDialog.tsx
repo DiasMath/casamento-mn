@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { updateGift, Gift } from "@/lib/firestoreService";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
 import { ImageUploader } from "./ImageUploader";
@@ -41,6 +42,7 @@ export function EditGiftDialog({
   const [title, setTitle] = useState(gift.title);
   const [marca, setMarca] = useState(gift.marca || "");
   const [image, setImage] = useState(gift.image);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [total, setTotal] = useState(String(gift.total));
   const [raised, setRaised] = useState(String(gift.raised));
   const [category, setCategory] = useState<GiftCategory>(
@@ -55,6 +57,7 @@ export function EditGiftDialog({
       setTitle(gift.title);
       setMarca(gift.marca || "");
       setImage(gift.image);
+      setImageBlob(null);
       setTotal(String(gift.total));
       setRaised(String(gift.raised));
       setCategory(gift.category ?? "outros");
@@ -65,9 +68,14 @@ export function EditGiftDialog({
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Usar a mesma validação centralizada!
+      let finalImage = image;
+
+      if (imageBlob) {
+        finalImage = await uploadToCloudinary(imageBlob);
+      }
+
       const { validTitle, validImage, totalNum, raisedNum, validMarca } =
-        validateGiftData(title, image, total, raised, marca);
+        validateGiftData(title, finalImage, total, raised, marca);
 
       await updateGift(gift.id, {
         title: validTitle,
@@ -102,7 +110,11 @@ export function EditGiftDialog({
         <form onSubmit={save} className="space-y-4">
           <div>
             <Label>Imagem do Presente (Toque para Trocar)</Label>
-            <ImageUploader value={image} onUpload={setImage} />
+            <ImageUploader
+              value={image}
+              onFileReady={setImageBlob}
+              hasNewFile={imageBlob !== null}
+            />
           </div>
           <div>
             <Label htmlFor="g-marca">Marca (Opcional)</Label>
