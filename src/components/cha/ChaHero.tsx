@@ -4,7 +4,7 @@ import c2Fallback from "@/assets/story-1.jpg";
 import c3Fallback from "@/assets/story-2.jpg";
 import c4Fallback from "@/assets/story-3.jpg";
 import c5Fallback from "@/assets/story-4.jpg";
-import { COUPLE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Branch, Flower } from "@/components/decor/Flower";
 import { getSiteImages } from "@/lib/firestoreService";
 
@@ -20,9 +20,11 @@ const FALLBACKS = [
 ];
 
 export function ChaHero() {
+  const { settings } = useSiteSettings();
   const [images, setImages] = useState<string[]>(FALLBACKS);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   useEffect(() => {
     getSiteImages().then((imgs) => {
@@ -34,13 +36,31 @@ export function ChaHero() {
         imgs.carousel5 || FALLBACKS[4],
         imgs.carousel6 || FALLBACKS[5],
       ];
-      if (list.some((img, i) => img !== images[i])) setImages(list);
+      if (list.some((img, i) => img !== FALLBACKS[i])) setImages(list);
     });
   }, []);
 
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % images.length);
   }, [images.length]);
+
+  const prev = useCallback(() => {
+    setCurrent((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const delta = e.changedTouches[0].clientX - touchStart;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) prev();
+      else next();
+    }
+    setTouchStart(null);
+  };
 
   useEffect(() => {
     if (paused) return;
@@ -50,9 +70,11 @@ export function ChaHero() {
 
   return (
     <section
-      className="relative h-[80vh] min-h-[560px] w-full overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {images.map((src, i) => (
         <img
@@ -60,7 +82,7 @@ export function ChaHero() {
           src={src}
           alt={`Foto do casal ${i + 1}`}
           loading={i === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[1500ms] ease-in-out ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
             i === current ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -68,50 +90,38 @@ export function ChaHero() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/40" />
 
-      <Branch
-        className="absolute top-0 left-0 hidden sm:block"
-        size={140}
-        rotate={-10}
-        opacity={0.2}
-      />
-      <Branch
-        className="absolute top-0 right-0 hidden sm:block"
-        size={140}
-        rotate={190}
-        opacity={0.2}
-      />
-      <Flower
-        className="absolute bottom-20 left-4 hidden sm:block"
-        size={45}
-        variant="yellow"
-        rotate={-20}
-        opacity={0.2}
-      />
-      <Flower
-        className="absolute bottom-24 right-6 hidden sm:block"
-        size={35}
-        variant="blue"
-        rotate={15}
-        opacity={0.15}
-      />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <Branch
+          className="absolute -top-4 -left-4 hidden sm:block"
+          size={120}
+          rotate={0}
+          opacity={0.2}
+        />
+        <Branch
+          className="absolute -top-4 -right-4 hidden sm:block"
+          size={120}
+          rotate={180}
+          opacity={0.2}
+        />
+      </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-end h-full text-center text-white px-6 pb-16 sm:pb-20">
+      <div className="relative z-10 flex flex-col items-center justify-end h-full text-center text-white px-6 pb-12 sm:pb-16">
         <p className="uppercase tracking-[0.4em] text-[10px] sm:text-xs bg-primary/70 inline-block px-4 py-1.5 rounded-full backdrop-blur text-primary-foreground/90">
           Chá de Panela
         </p>
 
         <h1 className="font-script text-6xl sm:text-7xl md:text-8xl mt-6 leading-[0.95] drop-shadow-sm">
-          {COUPLE.groom}
+          {settings.coupleGroom}
           <span className="block text-4xl sm:text-5xl md:text-6xl text-primary my-2">
             &amp;
           </span>
-          {COUPLE.bride}
+          {settings.coupleBride}
         </h1>
 
         <div className="mt-6 w-10 h-px bg-white/30" />
 
         <p className="mt-4 text-sm sm:text-base text-white/75 tracking-wide">
-          30 de setembro · 14h
+          {new Date(`${settings.chaDate}T12:00:00`).toLocaleDateString("pt-BR", { day: "numeric", month: "long" })} · {settings.chaTime}h
         </p>
       </div>
 

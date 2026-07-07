@@ -40,9 +40,10 @@ export const GIFT_PRIORITIES: {
   label: string;
   icon: string;
 }[] = [
+  { value: "premium", label: "Premium", icon: "💎" },
   { value: "alta", label: "Alta", icon: "⭐" },
   { value: "media", label: "Média", icon: "✨" },
-  { value: "baixa", label: "Baixa", icon: "○" },
+  { value: "baixa", label: "Baixa", icon: "🔹" },
 ];
 
 export { PIX_KEY };

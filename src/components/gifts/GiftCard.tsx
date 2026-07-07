@@ -1,5 +1,5 @@
-import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical, Gift, Undo2, Loader2, ExternalLink, Gem, Lock } from "lucide-react";
+import { useCallback, useEffect, useState, memo } from "react";
 import { devLog } from "@/lib/devLog";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -7,52 +7,67 @@ import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Gift, toggleGiftVisibility } from "@/lib/firestoreService";
+import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
 import { ThankYouSheet } from "./ThankYouSheet";
+import { ReserveGiftSheet } from "./ReserveGiftSheet";
 import { toast } from "sonner";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
 interface GiftCardProps {
-  gift: Gift;
+  gift: GiftType;
   onUpdate: () => void;
 }
 
-export function GiftCard({ gift, onUpdate }: GiftCardProps) {
+const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
   const { isAdmin } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [reserveOpen, setReserveOpen] = useState(false);
   const [localGift, setLocalGift] = useState(gift);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [cancellingReservation, setCancellingReservation] = useState(false);
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [confirmedValue, setConfirmedValue] = useState(0);
 
   useEffect(() => {
-    setLocalGift((prev) => {
-      if (gift.raised > prev.raised || gift.total !== prev.total) {
-        return gift;
-      }
-      return prev;
-    });
-  }, [gift.raised, gift.total]);
+    setLocalGift(gift);
+  }, [
+    gift.id,
+    gift.raised,
+    gift.total,
+    gift.title,
+    gift.image,
+    gift.category,
+    gift.priority,
+    gift.marca,
+    gift.hidden,
+    gift.reservedBy,
+    gift.reservedAt,
+    gift.buyLink,
+    gift.noValue,
+  ]);
 
   const pct = calculatePercentage(localGift.raised, localGift.total);
   const completed = localGift.raised >= localGift.total;
 
-  const handlePaymentSuccess = useCallback((value: number) => {
-    setLocalGift((prev) => ({
-      ...prev,
-      raised: prev.raised + value,
-    }));
-    setConfirmedValue(value);
-    setPayOpen(false);
-    setThankYouOpen(true);
-    onUpdate();
-  }, [onUpdate]);
+  const handlePaymentSuccess = useCallback(
+    (value: number) => {
+      setLocalGift((prev) => ({
+        ...prev,
+        raised: prev.raised + value,
+      }));
+      setConfirmedValue(value);
+      setPayOpen(false);
+      setThankYouOpen(true);
+      onUpdate();
+    },
+    [onUpdate],
+  );
 
   const handleSimulatePayment = async () => {
     const remaining = localGift.total - localGift.raised;
@@ -95,20 +110,59 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
     }
   };
 
+  const handleCancelReservation = async () => {
+    setCancellingReservation(true);
+    try {
+      await cancelReservation(localGift.id);
+      setLocalGift((prev) => ({
+        ...prev,
+        reservedBy: undefined,
+        reservedAt: undefined,
+      }));
+      toast.success("Reserva cancelada");
+      onUpdate();
+    } catch (error) {
+      devLog.error("Erro ao cancelar reserva:", error);
+      toast.error("Erro ao cancelar reserva");
+    } finally {
+      setCancellingReservation(false);
+    }
+  };
+
+  const handleReserveSuccess = useCallback(() => {
+    setLocalGift((prev) => ({
+      ...prev,
+      reservedBy: "Reservado",
+      reservedAt: new Date() as any,
+    }));
+    setReserveOpen(false);
+    onUpdate();
+  }, [onUpdate]);
+
   return (
     <>
-      <div className="group bg-card rounded-2xl overflow-hidden border border-border/60 shadow-sm flex flex-col relative">
-        {/* Badge de status (Oculto) */}
+      <div className={`group bg-card rounded-2xl overflow-hidden border shadow-sm flex flex-col relative ${
+        localGift.priority === "premium"
+          ? "border-yellow-400/80 shadow-[0_0_15px_rgba(255,215,0,0.25)]"
+          : "border-border/60"
+      }`}>
+        {/* Badge de status */}
         {localGift.hidden && (
           <div className="absolute top-2 left-2 z-10 bg-yellow-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
             Oculto
+          </div>
+        )}
+        {localGift.reservedBy && !localGift.hidden && (
+          <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <Lock className="w-3 h-3" />
+            Reservado
           </div>
         )}
 
         {/* Botões de Ação (Apenas Admin) com Animações */}
         {isAdmin && (
           <div className="absolute top-2 right-2 z-10 flex gap-2">
-            {!completed && (
+            {!completed && !localGift.chaMode && (
               <Button
                 size="icon"
                 variant="secondary"
@@ -157,23 +211,28 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
           </div>
         )}
 
-        <div className="aspect-video overflow-hidden bg-secondary">
+        <div className="aspect-video overflow-hidden bg-secondary relative">
           <img
             src={localGift.image}
             alt={localGift.title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-contain ${localGift.reservedBy ? "opacity-60" : ""}`}
           />
+          {localGift.reservedBy && (
+            <div className="absolute inset-0 flex items-center justify-center bg-primary/10 backdrop-blur-[1px]">
+              <div className="bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg">
+                <Lock className="w-6 h-6" />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 flex flex-col flex-1 gap-3">
           {/* Título e Marca */}
           <div>
             <h3 className="font-medium line-clamp-1">{localGift.title}</h3>
-            {localGift.marca && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                {localGift.marca}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 italic">
+              {localGift.marca || "Qualquer marca"}
+            </p>
           </div>
 
           {/* Badges de Categoria e Prioridade */}
@@ -194,11 +253,13 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
               <Badge
                 variant="outline"
                 className={`text-xs font-normal ${
-                  localGift.priority === "alta"
-                    ? "border-red-300 text-red-600"
-                    : localGift.priority === "media"
-                      ? "border-yellow-300 text-yellow-600"
-                      : "border-green-300 text-green-600"
+                  localGift.priority === "premium"
+                    ? "border-yellow-400 text-yellow-700 bg-yellow-50 shadow-[0_0_8px_rgba(255,215,0,0.3)]"
+                    : localGift.priority === "alta"
+                      ? "border-red-300 text-red-600"
+                      : localGift.priority === "media"
+                        ? "border-yellow-300 text-yellow-600"
+                        : "border-green-300 text-green-600"
                 }`}
               >
                 {
@@ -213,31 +274,122 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
             )}
           </div>
 
-          {/* BARRA DE PROGRESSO E VALORES ATUALIZADOS AQUI */}
-          <div className="space-y-1">
-            <Progress value={pct} className="h-1.5" />
-            <div className="flex justify-between items-baseline text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{pct}%</span>
-              <span className="font-medium text-foreground">
-                {brl(localGift.total)}
-              </span>
+          {/* Status Reservado (qualquer modo) */}
+          {localGift.reservedBy ? (
+            <div className="space-y-2 mt-auto">
+              <Button
+                disabled
+                className="w-full rounded-full transition-transform bg-secondary text-muted-foreground cursor-not-allowed"
+                variant="secondary"
+              >
+                <Lock className="w-4 h-4 mr-2" /> Reservado
+              </Button>
+              {isAdmin && (
+                <Button
+                  onClick={handleCancelReservation}
+                  disabled={cancellingReservation}
+                  className="w-full rounded-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  {cancellingReservation ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Undo2 className="w-4 h-4 mr-2" />
+                  )}
+                  Desreservar
+                </Button>
+              )}
             </div>
-          </div>
+          ) : localGift.chaMode ? (
+            <>
+              {/* Modo Chá de Panela: Reserva */}
+              <div className="space-y-2 mt-auto">
+                {localGift.buyLink && (
+                  <a
+                    href={localGift.buyLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-full h-10 bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Comprar na loja
+                  </a>
+                )}
+                <Button
+                  onClick={() => setReserveOpen(true)}
+                  className="w-full rounded-full transition-transform active:scale-95 bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                >
+                  <Gem className="w-4 h-4 mr-2" />
+                  Reservar presente
+                </Button>
+              </div>
+            </>
+          ) : localGift.noValue ? (
+            <>
+              {/* Modo sem valor: apenas botão de presentear */}
+              <div className="mt-auto">
+                <Button
+                  onClick={() => setPayOpen(true)}
+                  disabled={completed}
+                  className={`w-full rounded-full transition-transform active:scale-95 ${
+                    localGift.priority === "premium"
+                      ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                      : ""
+                  }`}
+                  variant={completed ? "secondary" : "default"}
+                >
+                  {completed ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" /> Comprado
+                    </>
+                  ) : localGift.priority === "premium" ? (
+                    <>
+                      <Gem className="w-4 h-4 mr-2" /> Presentear
+                    </>
+                  ) : (
+                    "Presentear"
+                  )}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Modo Normal: Pagamento */}
+              <div className="space-y-1 mt-auto">
+                <Progress value={pct} className="h-1.5" />
+                <div className="flex justify-between items-baseline text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{pct}%</span>
+                  <span className="font-medium text-foreground">
+                    {brl(localGift.total)}
+                  </span>
+                </div>
+              </div>
 
-          <Button
-            onClick={() => setPayOpen(true)}
-            disabled={completed}
-            className="w-full rounded-full transition-transform active:scale-95"
-            variant={completed ? "secondary" : "default"}
-          >
-            {completed ? (
-              <>
-                <Check className="w-4 h-4 mr-2" /> Comprado
-              </>
-            ) : (
-              "Presentear"
-            )}
-          </Button>
+              <Button
+                onClick={() => setPayOpen(true)}
+                disabled={completed}
+                className={`w-full rounded-full transition-transform active:scale-95 ${
+                  localGift.priority === "premium" && !completed
+                    ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                    : ""
+                }`}
+                variant={completed ? "secondary" : "default"}
+              >
+                {completed ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" /> Comprado
+                  </>
+                ) : localGift.priority === "premium" ? (
+                  <>
+                    <Gem className="w-4 h-4 mr-2" /> Presentear
+                  </>
+                ) : (
+                  "Presentear"
+                )}
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -255,12 +407,23 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
         onOpenChange={setDeleteOpen}
         onGiftDeleted={onUpdate}
       />
-      <PaymentSheet
-        gift={localGift}
-        open={payOpen}
-        onOpenChange={setPayOpen}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
+      {!localGift.chaMode && (
+        <PaymentSheet
+          gift={localGift}
+          open={payOpen}
+          onOpenChange={setPayOpen}
+          onPaymentSuccess={handlePaymentSuccess}
+          onReserveSuccess={handleReserveSuccess}
+        />
+      )}
+      {localGift.chaMode && (
+        <ReserveGiftSheet
+          gift={localGift}
+          open={reserveOpen}
+          onOpenChange={setReserveOpen}
+          onReserveSuccess={handleReserveSuccess}
+        />
+      )}
       <ThankYouSheet
         open={thankYouOpen}
         onOpenChange={setThankYouOpen}
@@ -269,4 +432,6 @@ export function GiftCard({ gift, onUpdate }: GiftCardProps) {
       />
     </>
   );
-}
+};
+
+export const GiftCard = memo(GiftCardComponent);

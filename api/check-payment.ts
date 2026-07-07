@@ -7,7 +7,11 @@ if (!admin.apps.length) {
     const pk = process.env.FIREBASE_PRIVATE_KEY;
     const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
 
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !cleanKey) {
+    if (
+      !process.env.FIREBASE_PROJECT_ID ||
+      !process.env.FIREBASE_CLIENT_EMAIL ||
+      !cleanKey
+    ) {
       console.error("[CheckPayment] ❌ Env vars Firebase ausentes:", {
         FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
         FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
@@ -24,7 +28,10 @@ if (!admin.apps.length) {
     });
     console.log("[CheckPayment] ✓ Firebase Admin inicializado");
   } catch (initError) {
-    console.error("[CheckPayment] ❌ Erro ao inicializar Firebase Admin:", initError);
+    console.error(
+      "[CheckPayment] ❌ Erro ao inicializar Firebase Admin:",
+      initError,
+    );
   }
 }
 
@@ -48,15 +55,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const payment = new Payment(client);
     const paymentData = await payment.get({ id: Number(paymentId) });
 
-    if (paymentData.status === "approved" && paymentData.payment_method_id === "pix") {
+    if (
+      paymentData.status === "approved" &&
+      paymentData.payment_method_id === "pix"
+    ) {
       const giftId = paymentData.metadata?.gift_id;
       const value = paymentData.transaction_amount;
-      const contributorName = paymentData.metadata?.contributor_name || "Anônimo";
+      const contributorName =
+        paymentData.metadata?.contributor_name || "Anônimo";
 
       if (giftId && value) {
         const giftSnap = await db.collection("gifts").doc(giftId).get();
         if (!giftSnap.exists) {
-          console.error(`[CheckPayment] Gift ${giftId} não encontrado no Firestore`);
+          console.error(
+            `[CheckPayment] Gift ${giftId} não encontrado no Firestore`,
+          );
         } else {
           const contributionRef = db
             .collection("contributions")
@@ -79,9 +92,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               method: "pix",
             });
 
-            console.log(`[CheckPayment] Pagamento processado via polling: R$ ${value} → ${giftId}`);
+            console.log(
+              `[CheckPayment] Pagamento processado via polling: R$ ${value} → ${giftId}`,
+            );
           } else {
-            console.log(`[CheckPayment] Pagamento ${paymentData.id} já processado`);
+            console.log(
+              `[CheckPayment] Pagamento ${paymentData.id} já processado`,
+            );
           }
         }
       }

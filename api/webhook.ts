@@ -9,7 +9,11 @@ if (!admin.apps.length) {
     const pk = process.env.FIREBASE_PRIVATE_KEY;
     const cleanKey = pk?.replace(/\\n/g, "\n")?.replace(/\\r/g, "")?.trim();
 
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !cleanKey) {
+    if (
+      !process.env.FIREBASE_PROJECT_ID ||
+      !process.env.FIREBASE_CLIENT_EMAIL ||
+      !cleanKey
+    ) {
       console.error("[Webhook] ❌ Env vars Firebase ausentes:", {
         FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
         FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
@@ -26,7 +30,10 @@ if (!admin.apps.length) {
     });
     console.log("[Webhook] ✓ Firebase Admin inicializado");
   } catch (initError) {
-    console.error("[Webhook] ❌ Erro ao inicializar Firebase Admin:", initError);
+    console.error(
+      "[Webhook] ❌ Erro ao inicializar Firebase Admin:",
+      initError,
+    );
   }
 }
 

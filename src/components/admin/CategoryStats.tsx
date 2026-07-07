@@ -20,6 +20,7 @@ interface CategoryData {
 }
 
 const PRIORITY_COLORS: Record<GiftPriority, string> = {
+  premium: "text-yellow-600 bg-yellow-50 border-yellow-200",
   alta: "text-red-600 bg-red-50 border-red-200",
   media: "text-yellow-600 bg-yellow-50 border-yellow-200",
   baixa: "text-green-600 bg-green-50 border-green-200",

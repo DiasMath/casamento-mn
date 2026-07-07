@@ -1,9 +1,11 @@
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { COUPLE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower } from "@/components/decor/Flower";
 
 export function Footer() {
+  const { settings } = useSiteSettings();
+
   return (
     <footer className="relative border-t border-border overflow-hidden">
       <Flower
@@ -24,7 +26,7 @@ export function Footer() {
       <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center gap-5 text-center">
         <Heart className="w-6 h-6 text-primary fill-primary/40" />
         <p className="font-script text-3xl">
-          {COUPLE.groom} & {COUPLE.bride}
+          {settings.coupleGroom} & {settings.coupleBride}
         </p>
         <p className="text-sm text-muted-foreground max-w-md">
           Obrigado por fazer parte da nossa história. Mal podemos esperar para

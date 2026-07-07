@@ -25,6 +25,11 @@ const PRIORITY_STYLES: Record<
   GiftPriority,
   { color: string; bgColor: string; borderColor: string }
 > = {
+  premium: {
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-200",
+  },
   alta: {
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -82,7 +87,7 @@ export function PriorityStats({ gifts }: PriorityStatsProps) {
             : 0,
       }))
       .sort((a, b) => {
-        const order: GiftPriority[] = ["alta", "media", "baixa"];
+        const order: GiftPriority[] = ["premium", "alta", "media", "baixa"];
         return order.indexOf(a.priority) - order.indexOf(b.priority);
       });
   }, [gifts]);

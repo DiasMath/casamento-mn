@@ -28,7 +28,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  WEDDING_DATE,
   GIFT_CATEGORIES,
   GIFT_PRIORITIES,
 } from "@/lib/constants";
@@ -36,9 +35,14 @@ import { ContributionChart } from "@/components/admin/ContributionChart";
 import { CategoryStats } from "@/components/admin/CategoryStats";
 import { PriorityStats } from "@/components/admin/PriorityStats";
 import { SiteImagesDialog } from "@/components/admin/SiteImagesSection";
+import { PaletteDialog } from "@/components/admin/PaletteDialog";
+import { GeneralSettingsDialog } from "@/components/admin/GeneralSettingsDialog";
+import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function AdminPainel() {
   const { isAdmin, loading } = useAuth();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
 
   const [gifts, setGifts] = useState<Gift[]>([]);
@@ -114,8 +118,12 @@ export function AdminPainel() {
     (g) => g.raised > 0 && g.raised < g.total,
   ).length;
 
+  // Métricas de reservas (cha de panela)
+  const reservedGifts = gifts.filter((g) => g.reservedBy);
+  const reservedCount = reservedGifts.length;
+
   // Cálculo de dias para o casamento
-  const diffTime = new Date(WEDDING_DATE).getTime() - new Date().getTime();
+  const diffTime = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`).getTime() - new Date().getTime();
   const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   // Métricas de RSVP
@@ -160,6 +168,12 @@ export function AdminPainel() {
       value: rsvps.length.toString(),
       icon: CheckCircle,
     },
+    {
+      label: "Presentes Reservados",
+      value: reservedCount.toString(),
+      icon: PackageCheck,
+      subtext: reservedCount > 0 ? `${reservedGifts.map((g) => g.title).slice(0, 3).join(", ")}${reservedCount > 3 ? "..." : ""}` : "Nenhum reserva ainda",
+    },
   ];
 
   return (
@@ -169,7 +183,9 @@ export function AdminPainel() {
           <p className="font-script text-3xl text-primary">olá, noivos</p>
           <h1 className="text-3xl font-semibold mt-1">Painel Administrativo</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <GeneralSettingsDialog />
+          <PaletteDialog />
           <SiteImagesDialog />
           <Button variant="outline" asChild className="rounded-full gap-2">
             <Link to="/">
@@ -221,6 +237,7 @@ export function AdminPainel() {
           <CategoryStats gifts={gifts} />
           <PriorityStats gifts={gifts} />
         </div>
+        <ReservedGiftsSection gifts={gifts} onUpdate={loadData} />
       </div>
 
       <div className="space-y-8">

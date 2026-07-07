@@ -9,7 +9,7 @@ import {
   SheetHeader,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { COUPLE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const links = [
   { label: "Nossa História", hash: "historia" },
@@ -32,6 +32,7 @@ function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, hash: string) {
 }
 
 export function Navbar() {
+  const { settings } = useSiteSettings();
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,7 +41,7 @@ export function Navbar() {
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />
           <span className="font-script text-xl tracking-wide text-foreground whitespace-nowrap">
-            {COUPLE.groom} & {COUPLE.bride}
+            {settings.coupleGroom} & {settings.coupleBride}
           </span>
         </Link>
 
@@ -74,7 +75,7 @@ export function Navbar() {
             <SheetContent side="right" className="w-[85%] sm:w-80">
               <SheetHeader>
                 <SheetTitle className="font-script text-2xl text-left">
-                  {COUPLE.bride} & {COUPLE.groom}
+                  {settings.coupleBride} & {settings.coupleGroom}
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 mt-6 px-4">

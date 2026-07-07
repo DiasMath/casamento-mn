@@ -14,6 +14,7 @@ import {
   Timestamp,
   increment,
   onSnapshot,
+  runTransaction,
 } from "firebase/firestore";
 
 export type GiftCategory =
@@ -25,7 +26,7 @@ export type GiftCategory =
   | "decoracao"
   | "outros";
 
-export type GiftPriority = "alta" | "media" | "baixa";
+export type GiftPriority = "premium" | "alta" | "media" | "baixa";
 
 export interface Gift {
   id: string;
@@ -37,6 +38,11 @@ export interface Gift {
   hidden: boolean;
   category: GiftCategory;
   priority: GiftPriority;
+  chaMode?: boolean;
+  reservedBy?: string;
+  reservedAt?: Timestamp;
+  buyLink?: string;
+  noValue?: boolean;
 }
 
 export interface RSVP {
@@ -78,13 +84,20 @@ const getDb = () => {
 };
 
 /**
- * Ordena presentes: incompletos primeiro (A-Z), concluídos por último (A-Z)
+ * Ordena presentes: pendentes primeiro, reservados no meio, concluídos por último
  */
 function sortGifts(gifts: Gift[]): Gift[] {
   return [...gifts].sort((a, b) => {
     const aCompleted = a.raised >= a.total;
     const bCompleted = b.raised >= b.total;
-    if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+    const aReserved = !!a.reservedBy;
+    const bReserved = !!b.reservedBy;
+
+    // 0 = pendente, 1 = reservado, 2 = concluído
+    const aStatus = aCompleted ? 2 : aReserved ? 1 : 0;
+    const bStatus = bCompleted ? 2 : bReserved ? 1 : 0;
+
+    if (aStatus !== bStatus) return aStatus - bStatus;
     return a.title.localeCompare(b.title, "pt-BR");
   });
 }
@@ -108,6 +121,11 @@ export const getGifts = async (): Promise<Gift[]> => {
       hidden: data.hidden ?? false,
       category: data.category ?? "outros",
       priority: data.priority ?? "media",
+      chaMode: data.chaMode ?? false,
+      reservedBy: data.reservedBy || null,
+      reservedAt: data.reservedAt || null,
+      buyLink: data.buyLink || "",
+      noValue: data.noValue ?? false,
     } as Gift;
   });
 
@@ -128,6 +146,9 @@ export const addGift = async (gift: Omit<Gift, "id">): Promise<string> => {
     hidden: gift.hidden ?? false,
     category: gift.category ?? "outros",
     priority: gift.priority ?? "media",
+    chaMode: gift.chaMode ?? false,
+    buyLink: gift.buyLink || "",
+    noValue: gift.noValue ?? false,
   });
   return docRef.id;
 };
@@ -182,6 +203,11 @@ export const getVisibleGifts = async (): Promise<Gift[]> => {
         hidden: data.hidden ?? false,
         category: data.category ?? "outros",
         priority: data.priority ?? "media",
+        chaMode: data.chaMode ?? false,
+        reservedBy: data.reservedBy || null,
+        reservedAt: data.reservedAt || null,
+        buyLink: data.buyLink || "",
+        noValue: data.noValue ?? false,
       } as Gift;
     })
     .filter((gift) => !gift.hidden);
@@ -404,4 +430,139 @@ export const updateSiteImage = async (
   const docRef = doc(getDb(), "settings", "siteImages");
   const { setDoc } = await import("firebase/firestore");
   await setDoc(docRef, { [key]: url }, { merge: true });
+};
+
+/**
+ * Reserva um presente para o chá de panela (transação atômica)
+ */
+export const reserveGift = async (
+  giftId: string,
+  name: string,
+): Promise<{ success: boolean; error?: string }> => {
+  const db = getDb();
+  try {
+    await runTransaction(db, async (transaction) => {
+      const giftRef = doc(db, "gifts", giftId);
+      const giftSnap = await transaction.get(giftRef);
+
+      if (!giftSnap.exists()) {
+        throw new Error("Presente não encontrado");
+      }
+
+      const giftData = giftSnap.data();
+      if (giftData.reservedBy) {
+        throw new Error("Este presente já foi reservado por outra pessoa");
+      }
+
+      transaction.update(giftRef, {
+        reservedBy: name.trim(),
+        reservedAt: serverTimestamp(),
+      });
+    });
+    return { success: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Erro ao reservar presente";
+    return { success: false, error: message };
+  }
+};
+
+/**
+ * Cancela a reserva de um presente (apenas admin)
+ */
+export const cancelReservation = async (giftId: string): Promise<void> => {
+  const giftRef = doc(getDb(), "gifts", giftId);
+  await updateDoc(giftRef, {
+    reservedBy: null,
+    reservedAt: null,
+  });
+};
+
+export interface ColorPalette {
+  id: string;
+  name: string;
+  hex: string;
+}
+
+const DEFAULT_PALETTE: ColorPalette[] = [
+  { id: "1", name: "Bege", hex: "#FFFDD0" },
+  { id: "2", name: "Preto", hex: "#1a1a1a" },
+  { id: "3", name: "Cinza", hex: "#9e9e9e" },
+  { id: "4", name: "Branco", hex: "#f5f5f5" },
+  { id: "5", name: "Marrom", hex: "#6d4c2a" },
+];
+
+export const getColorPalette = async (): Promise<ColorPalette[]> => {
+  try {
+    const docRef = doc(getDb(), "settings", "colorPalette");
+    const docSnap = await import("firebase/firestore").then((m) =>
+      m.getDoc(docRef),
+    );
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return (data.colors as ColorPalette[]) || DEFAULT_PALETTE;
+    }
+  } catch (error) {
+    devLog.error("Erro ao buscar paleta de cores:", error);
+  }
+  return DEFAULT_PALETTE;
+};
+
+export const updateColorPalette = async (
+  colors: ColorPalette[],
+): Promise<void> => {
+  const docRef = doc(getDb(), "settings", "colorPalette");
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(docRef, { colors }, { merge: true });
+};
+
+export interface SiteSettings {
+  coupleBride: string;
+  coupleGroom: string;
+  weddingDate: string;
+  weddingTime: string;
+  weddingVenueName: string;
+  weddingVenueAddress: string;
+  weddingMapsUrl: string;
+  chaDate: string;
+  chaTime: string;
+  chaVenueAddress: string;
+  chaMapsUrl: string;
+}
+
+const DEFAULT_SETTINGS: SiteSettings = {
+  coupleBride: "Nayana",
+  coupleGroom: "Matheus",
+  weddingDate: "2027-02-14",
+  weddingTime: "15:00",
+  weddingVenueName: "Quinta dos Jardins",
+  weddingVenueAddress: "Estrada das Acácias, 1200 — Itaipava, RJ",
+  weddingMapsUrl: "",
+  chaDate: "2026-09-30",
+  chaTime: "14:00",
+  chaVenueAddress: "Rua Parintis, 516 — RJ",
+  chaMapsUrl: "",
+};
+
+export const getSiteSettings = async (): Promise<SiteSettings> => {
+  try {
+    const docRef = doc(getDb(), "settings", "siteConfig");
+    const docSnap = await import("firebase/firestore").then((m) =>
+      m.getDoc(docRef),
+    );
+    if (docSnap.exists()) {
+      return { ...DEFAULT_SETTINGS, ...docSnap.data() } as SiteSettings;
+    }
+  } catch (error) {
+    devLog.error("Erro ao buscar configurações:", error);
+  }
+  return DEFAULT_SETTINGS;
+};
+
+export const updateSiteSettings = async (
+  settings: Partial<SiteSettings>,
+): Promise<void> => {
+  const docRef = doc(getDb(), "settings", "siteConfig");
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(docRef, settings, { merge: true });
 };

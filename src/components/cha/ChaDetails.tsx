@@ -1,19 +1,23 @@
 import { MapPin, Clock, Calendar } from "lucide-react";
-import { CHA_DATE, CHA_VENUE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower, Branch } from "@/components/decor/Flower";
 
-const formattedDate = CHA_DATE.toLocaleDateString("pt-BR", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-});
-
-const formattedTime = CHA_DATE.toLocaleTimeString("pt-BR", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 export function ChaDetails() {
+  const { settings } = useSiteSettings();
+
+  const chaDate = new Date(`${settings.chaDate}T${settings.chaTime}:00`);
+
+  const formattedDate = chaDate.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const formattedTime = chaDate.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <section className="relative px-4 py-16 sm:py-20 overflow-hidden">
       <Flower
@@ -73,8 +77,7 @@ export function ChaDetails() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Local</p>
-                <p className="font-medium">{CHA_VENUE.address}</p>
-                <p className="text-sm text-foreground/70">{CHA_VENUE.city}</p>
+                <p className="font-medium">{settings.chaVenueAddress}</p>
               </div>
             </div>
           </div>
@@ -82,7 +85,7 @@ export function ChaDetails() {
           <div className="rounded-3xl overflow-hidden shadow-[var(--shadow-card)] border border-border/60 min-h-[250px] sm:min-h-0 bg-pastel-gradient relative">
             <iframe
               title="Mapa do local"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(`${CHA_VENUE.address}, ${CHA_VENUE.city}`)}&output=embed`}
+              src={settings.chaMapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(settings.chaVenueAddress)}&output=embed`}
               className="absolute inset-0 w-full h-full"
               loading="lazy"
             />

@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -51,6 +52,9 @@ export function EditGiftDialog({
   const [priority, setPriority] = useState<GiftPriority>(
     gift.priority ?? "media",
   );
+  const [chaMode, setChaMode] = useState(gift.chaMode ?? false);
+  const [buyLink, setBuyLink] = useState(gift.buyLink || "");
+  const [noValue, setNoValue] = useState(gift.noValue ?? false);
 
   useEffect(() => {
     if (open) {
@@ -62,6 +66,9 @@ export function EditGiftDialog({
       setRaised(String(gift.raised));
       setCategory(gift.category ?? "outros");
       setPriority(gift.priority ?? "media");
+      setChaMode(gift.chaMode ?? false);
+      setBuyLink(gift.buyLink || "");
+      setNoValue(gift.noValue ?? false);
     }
   }, [open, gift]);
 
@@ -81,10 +88,13 @@ export function EditGiftDialog({
         title: validTitle,
         marca: validMarca,
         image: validImage,
-        total: totalNum,
-        raised: raisedNum,
+        total: chaMode || noValue ? 1 : totalNum,
+        raised: chaMode || noValue ? 0 : raisedNum,
         category,
         priority,
+        chaMode,
+        buyLink: chaMode ? buyLink : "",
+        noValue,
       });
 
       toast.success("Presente atualizado!");
@@ -137,34 +147,63 @@ export function EditGiftDialog({
               placeholder="Ex: Jogo de Pratos"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="g-total">Valor total (R$)</Label>
-              <Input
-                id="g-total"
-                type="number"
-                min={1}
-                step="0.01"
-                value={total}
-                onChange={(e) => setTotal(e.target.value)}
-                className="h-11 rounded-xl mt-1.5"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="g-raised">Arrecadado (R$)</Label>
-              <Input
-                id="g-raised"
-                type="number"
-                min={0}
-                step="0.01"
-                value={raised}
-                onChange={(e) => setRaised(e.target.value)}
-                className="h-11 rounded-xl mt-1.5"
-                required
-              />
-            </div>
+          <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
+            <Checkbox
+              id="chaMode"
+              checked={chaMode}
+              onCheckedChange={(v) => setChaMode(v === true)}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="chaMode"
+              className="text-sm text-muted-foreground leading-snug cursor-pointer"
+            >
+              Presente para o chá de panela (modo reserva)
+            </Label>
           </div>
+          {chaMode && (
+            <div>
+              <Label htmlFor="g-buyLink">Link de compra online (Opcional)</Label>
+              <Input
+                id="g-buyLink"
+                type="url"
+                value={buyLink}
+                onChange={(e) => setBuyLink(e.target.value)}
+                className="h-11 rounded-xl mt-1.5"
+                placeholder="https://www.exemplo.com/produto"
+              />
+            </div>
+          )}
+          {!chaMode && !noValue && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="g-total">Valor total (R$)</Label>
+                <Input
+                  id="g-total"
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  value={total}
+                  onChange={(e) => setTotal(e.target.value)}
+                  className="h-11 rounded-xl mt-1.5"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="g-raised">Arrecadado (R$)</Label>
+                <Input
+                  id="g-raised"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={raised}
+                  onChange={(e) => setRaised(e.target.value)}
+                  className="h-11 rounded-xl mt-1.5"
+                  required
+                />
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Categoria</Label>
@@ -203,6 +242,22 @@ export function EditGiftDialog({
               </Select>
             </div>
           </div>
+          {!chaMode && (
+            <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
+              <Checkbox
+                id="noValue"
+                checked={noValue}
+                onCheckedChange={(v) => setNoValue(v === true)}
+                className="mt-0.5"
+              />
+              <Label
+                htmlFor="noValue"
+                className="text-sm text-muted-foreground leading-snug cursor-pointer"
+              >
+                Presente sem valor definido
+              </Label>
+            </div>
+          )}
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               type="button"

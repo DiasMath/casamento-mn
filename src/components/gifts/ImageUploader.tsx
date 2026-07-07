@@ -2,7 +2,7 @@ import { useRef, useState, useCallback } from "react";
 import { devLog } from "@/lib/devLog";
 import { CropModal } from "./CropModal";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, ImageIcon, X } from "lucide-react";
+import { Upload, Loader2, ImageIcon, X, Pencil } from "lucide-react";
 
 interface ImageUploaderProps {
   value?: string;
@@ -60,6 +60,12 @@ export function ImageUploader({
     [onFileReady, previewUrl],
   );
 
+  const handleEdit = useCallback(() => {
+    if (!displayUrl) return;
+    setSelectedFile(displayUrl);
+    setCropOpen(true);
+  }, [displayUrl]);
+
   const handleRemove = useCallback(() => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -88,10 +94,21 @@ export function ImageUploader({
             <img
               src={displayUrl}
               alt="Preview do presente"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
           <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={handleEdit}
+              disabled={disabled}
+              className="rounded-full"
+            >
+              <Pencil className="w-4 h-4 mr-1" />
+              Editar
+            </Button>
             <Button
               type="button"
               size="sm"
@@ -139,7 +156,7 @@ export function ImageUploader({
           open={cropOpen}
           onClose={() => {
             setCropOpen(false);
-            if (previewUrl === null) {
+            if (previewUrl === null && selectedFile !== displayUrl) {
               URL.revokeObjectURL(selectedFile);
             }
           }}

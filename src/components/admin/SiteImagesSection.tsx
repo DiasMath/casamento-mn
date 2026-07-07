@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ImagePlus, Check, Loader2, Images, BookOpen } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ImagePlus, Check, Loader2, Images, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { devLog } from "@/lib/devLog";
 import {
@@ -8,7 +8,7 @@ import {
   type SiteImages,
   type SiteImageKey,
 } from "@/lib/firestoreService";
-import { isCloudinaryUrl } from "@/lib/cloudinary";
+import { uploadToCloudinary, isCloudinaryUrl } from "@/lib/cloudinary";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { CropModal } from "@/components/gifts/CropModal";
 
 const CAROUSEL_KEYS: SiteImageKey[] = [
   "carousel1",
@@ -44,17 +45,19 @@ const IMAGE_LABELS: Record<SiteImageKey, string> = {
 };
 
 function ImageRow({
-  key,
+  imageKey,
   label,
   url,
   isUploading,
-  onUpload,
+  onSelect,
+  onDelete,
 }: {
-  key: SiteImageKey;
+  imageKey: SiteImageKey;
   label: string;
   url: string;
   isUploading: boolean;
-  onUpload: (key: SiteImageKey, file: File) => void;
+  onSelect: (key: SiteImageKey, file: File) => void;
+  onDelete: (key: SiteImageKey) => void;
 }) {
   const hasImage = !!url && isCloudinaryUrl(url);
 
@@ -73,37 +76,78 @@ function ImageRow({
           {hasImage ? "Imagem personalizada" : "Usando imagem padrão"}
         </p>
       </div>
-      <label>
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          disabled={isUploading}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onUpload(key, file);
-            e.target.value = "";
-          }}
-        />
-        <Button
-          variant={hasImage ? "outline" : "default"}
-          size="sm"
-          className="rounded-full gap-1"
-          disabled={isUploading}
-          asChild
-        >
-          <span>
-            {isUploading ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : hasImage ? (
-              <Check className="w-3 h-3" />
-            ) : (
-              <ImagePlus className="w-3 h-3" />
-            )}
-            {isUploading ? "Enviando..." : hasImage ? "Trocar" : "Enviar"}
-          </span>
-        </Button>
-      </label>
+      <div className="flex gap-1.5">
+        <label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            disabled={isUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onSelect(imageKey, file);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            variant={hasImage ? "outline" : "default"}
+            size="sm"
+            className="rounded-full gap-1"
+            disabled={isUploading}
+            asChild
+          >
+            <span>
+              {isUploading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : hasImage ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <ImagePlus className="w-3 h-3" />
+              )}
+              {isUploading ? "Enviando..." : hasImage ? "Trocar" : "Enviar"}
+            </span>
+          </Button>
+        </label>
+        {hasImage && (
+          <>
+            <label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={isUploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onSelect(imageKey, file);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1"
+                disabled={isUploading}
+                asChild
+              >
+                <span>
+                  <Pencil className="w-3 h-3" />
+                  Editar
+                </span>
+              </Button>
+            </label>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1 text-destructive hover:text-destructive"
+              disabled={isUploading}
+              onClick={() => onDelete(imageKey)}
+            >
+              <Trash2 className="w-3 h-3" />
+              Excluir
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -125,6 +169,10 @@ export function SiteImagesDialog() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<SiteImageKey | null>(null);
 
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropKey, setCropKey] = useState<SiteImageKey | null>(null);
+
   useEffect(() => {
     if (open) {
       setLoading(true);
@@ -135,106 +183,133 @@ export function SiteImagesDialog() {
     }
   }, [open]);
 
-  const handleUpload = async (key: SiteImageKey, file: File) => {
-    setUploading(key);
+  const handleFileSelect = useCallback((key: SiteImageKey, file: File) => {
+    const url = URL.createObjectURL(file);
+    setCropSrc(url);
+    setCropKey(key);
+    setCropOpen(true);
+  }, []);
+
+  const handleCropComplete = useCallback(
+    async (blob: Blob) => {
+      if (!cropKey) return;
+      setUploading(cropKey);
+      setCropOpen(false);
+      try {
+        const url = await uploadToCloudinary(blob);
+        await updateSiteImage(cropKey, url);
+        setImages((prev) => ({ ...prev, [cropKey]: url }));
+        toast.success(`${IMAGE_LABELS[cropKey]} atualizada!`);
+      } catch (err) {
+        devLog.error(err);
+        toast.error("Erro ao enviar imagem.");
+      } finally {
+        setUploading(null);
+        if (cropSrc) URL.revokeObjectURL(cropSrc);
+        setCropSrc(null);
+        setCropKey(null);
+      }
+    },
+    [cropKey, cropSrc],
+  );
+
+  const handleDelete = useCallback(async (key: SiteImageKey) => {
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append(
-        "upload_preset",
-        import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string,
-      );
-      formData.append("folder", "casamento/site");
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_5/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: "POST", body: formData },
-      );
-
-      if (!res.ok) throw new Error("Falha no upload");
-
-      const data = await res.json();
-      const url = data.secure_url as string;
-
-      await updateSiteImage(key, url);
-      setImages((prev) => ({ ...prev, [key]: url }));
-      toast.success(`${IMAGE_LABELS[key]} atualizada!`);
+      await updateSiteImage(key, "");
+      setImages((prev) => ({ ...prev, [key]: "" }));
+      toast.success(`${IMAGE_LABELS[key]} removida!`);
     } catch (err) {
       devLog.error(err);
-      toast.error("Erro ao enviar imagem.");
-    } finally {
-      setUploading(null);
+      toast.error("Erro ao remover imagem.");
     }
-  };
+  }, []);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-full gap-2">
-          <Images className="w-4 h-4" /> Imagens
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="sm:pr-12 pt-1">
-          <DialogTitle className="flex items-center gap-2">
-            <Images className="w-5 h-5" /> Imagens do Site
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Gerencie as imagens do carrossel e da história do site
-          </DialogDescription>
-        </DialogHeader>
-        {loading ? (
-          <div className="py-8 text-center text-muted-foreground">
-            Carregando...
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Carrossel */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Images className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-semibold uppercase tracking-wide">
-                  Carrossel Hero
-                </h3>
-              </div>
-              <div className="space-y-2">
-                {CAROUSEL_KEYS.map((key) => (
-                  <ImageRow
-                    key={key}
-                    key_={key}
-                    label={IMAGE_LABELS[key]}
-                    url={images[key]}
-                    isUploading={uploading === key}
-                    onUpload={handleUpload}
-                  />
-                ))}
-              </div>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="rounded-full gap-2">
+            <Images className="w-4 h-4" /> Imagens
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="sm:pr-12 pt-1">
+            <DialogTitle className="flex items-center gap-2">
+              <Images className="w-5 h-5" /> Imagens do Site
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Gerencie as imagens do carrossel e da história do site
+            </DialogDescription>
+          </DialogHeader>
+          {loading ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Carregando...
             </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Carrossel */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Images className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wide">
+                    Carrossel Hero
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {CAROUSEL_KEYS.map((key) => (
+                    <ImageRow
+                      key={key}
+                      imageKey={key}
+                      label={IMAGE_LABELS[key]}
+                      url={images[key]}
+                      isUploading={uploading === key}
+                      onSelect={handleFileSelect}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </div>
 
-            {/* Capítulos */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-semibold uppercase tracking-wide">
-                  Nossa História
-                </h3>
-              </div>
-              <div className="space-y-2">
-                {STORY_KEYS.map((key) => (
-                  <ImageRow
-                    key={key}
-                    key_={key}
-                    label={IMAGE_LABELS[key]}
-                    url={images[key]}
-                    isUploading={uploading === key}
-                    onUpload={handleUpload}
-                  />
-                ))}
+              {/* Capítulos */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wide">
+                    Nossa História
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {STORY_KEYS.map((key) => (
+                    <ImageRow
+                      key={key}
+                      imageKey={key}
+                      label={IMAGE_LABELS[key]}
+                      url={images[key]}
+                      isUploading={uploading === key}
+                      onSelect={handleFileSelect}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {cropSrc && (
+        <CropModal
+          imageSrc={cropSrc}
+          open={cropOpen}
+          onClose={() => {
+            setCropOpen(false);
+            URL.revokeObjectURL(cropSrc);
+            setCropSrc(null);
+            setCropKey(null);
+          }}
+          onCropComplete={handleCropComplete}
+        />
+      )}
+    </>
   );
 }

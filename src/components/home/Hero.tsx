@@ -4,15 +4,9 @@ import c2Fallback from "@/assets/story-1.jpg";
 import c3Fallback from "@/assets/story-2.jpg";
 import c4Fallback from "@/assets/story-3.jpg";
 import c5Fallback from "@/assets/story-4.jpg";
-import { COUPLE, WEDDING_DATE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
 import { getSiteImages } from "@/lib/firestoreService";
-
-const dateStr = WEDDING_DATE.toLocaleDateString("pt-BR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
 
 const INTERVAL = 3000;
 
@@ -26,6 +20,7 @@ const FALLBACKS = [
 ];
 
 export function Hero() {
+  const { settings } = useSiteSettings();
   const [images, setImages] = useState<string[]>(FALLBACKS);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -57,7 +52,7 @@ export function Hero() {
   return (
     <section
       id="save-date"
-      className="relative min-h-[88vh] flex items-center justify-center overflow-hidden"
+      className="relative min-h-[60vh] sm:min-h-[88vh] flex items-center justify-center overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -155,17 +150,21 @@ export function Hero() {
           Save the Date
         </p>
         <h1 className="font-script text-6xl sm:text-7xl md:text-8xl mt-6 leading-[0.95] text-foreground drop-shadow-sm">
-          {COUPLE.groom}
+          {settings.coupleGroom}
           <span className="block text-4xl sm:text-5xl md:text-6xl text-primary my-2">
             &
           </span>
-          {COUPLE.bride}
+          {settings.coupleBride}
         </h1>
         <p className="mt-8 text-base sm:text-lg text-foreground/80">
           Vamos casar em
         </p>
         <p className="mt-1 text-xl sm:text-2xl font-medium text-foreground capitalize">
-          {dateStr}
+          {new Date(`${settings.weddingDate}T12:00:00`).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
         </p>
         <p className="mt-6 text-sm text-muted-foreground italic max-w-md mx-auto">
           "E que assim seja, para todo o sempre."

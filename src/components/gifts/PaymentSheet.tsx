@@ -11,22 +11,27 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Copy, Check, Loader2, QrCode, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Gift } from "@/lib/firestoreService";
+import { brl } from "@/lib/format";
+import { ReserveGiftSheet } from "./ReserveGiftSheet";
 
 export function PaymentSheet({
   gift,
   open,
   onOpenChange,
   onPaymentSuccess,
+  onReserveSuccess,
 }: {
   gift: Gift;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onPaymentSuccess?: (value: number) => void;
+  onReserveSuccess?: () => void;
 }) {
   const remaining = Math.max(0, gift.total - gift.raised);
   const [amount, setAmount] = useState<string>("");
@@ -34,6 +39,8 @@ export function PaymentSheet({
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cardLoading, setCardLoading] = useState(false);
+  const [preferStore, setPreferStore] = useState(false);
+  const [reserveOpen, setReserveOpen] = useState(false);
 
   // Estados do fluxo do PIX
   const [step, setStep] = useState<"form" | "pix">("form");
@@ -224,6 +231,7 @@ export function PaymentSheet({
   };
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
@@ -249,6 +257,14 @@ export function PaymentSheet({
                 <p className="text-xs text-muted-foreground">Presentear</p>
                 <p className="text-base font-medium">{gift.title}</p>
               </div>
+              {gift.raised < gift.total && (
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Falta</p>
+                  <p className="text-sm font-medium text-primary">
+                    {brl(gift.total - gift.raised)}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -260,6 +276,26 @@ export function PaymentSheet({
                 placeholder="Queremos agradecer pessoalmente!"
                 className="rounded-xl h-11"
               />
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+              <Checkbox
+                id="preferStore"
+                checked={preferStore}
+                onCheckedChange={(v) => {
+                  if (v === true) {
+                    onOpenChange(false);
+                    setTimeout(() => setReserveOpen(true), 200);
+                  }
+                  setPreferStore(v === true);
+                }}
+              />
+              <Label
+                htmlFor="preferStore"
+                className="text-sm cursor-pointer"
+              >
+                Prefiro comprar na loja
+              </Label>
             </div>
 
             <div>
@@ -317,7 +353,8 @@ export function PaymentSheet({
                   )}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  Você será redirecionado para o Mercado Pago para pagar com segurança.
+                  Você será redirecionado para o Mercado Pago para pagar com
+                  segurança.
                 </p>
               </TabsContent>
             </Tabs>
@@ -399,7 +436,8 @@ export function PaymentSheet({
             <div className="flex items-center gap-3 p-4 bg-primary/10 text-primary rounded-xl w-full">
               <Loader2 className="w-5 h-5 animate-spin shrink-0" />
               <p className="text-xs font-medium">
-                Aguardando pagamento. Assim que o banco confirmar, esta tela será atualizada!
+                Aguardando pagamento. Assim que o banco confirmar, esta tela
+                será atualizada!
               </p>
             </div>
             <Button
@@ -413,5 +451,17 @@ export function PaymentSheet({
         )}
       </SheetContent>
     </Sheet>
+
+    <ReserveGiftSheet
+      gift={gift}
+      open={reserveOpen}
+      onOpenChange={(v) => {
+        setReserveOpen(v);
+        if (!v) setPreferStore(false);
+      }}
+      onReserveSuccess={onReserveSuccess}
+      mode="generic"
+    />
+    </>
   );
 }

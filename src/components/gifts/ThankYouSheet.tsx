@@ -7,6 +7,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
 import { brl } from "@/lib/format";
 
 interface ThankYouSheetProps {
@@ -58,10 +59,10 @@ export function ThankYouSheet({
         side="bottom"
         className="rounded-t-3xl max-h-[70vh] sm:max-w-lg sm:mx-auto p-0 overflow-hidden"
       >
-        {/* Barra verde regressiva */}
-        <div className="h-1.5 w-full bg-green-100">
+        {/* Barra regressiva */}
+        <div className="h-1.5 w-full bg-primary/20">
           <div
-            className="h-full bg-green-500 transition-[width] duration-100 ease-linear"
+            className="h-full bg-primary transition-[width] duration-100 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -74,18 +75,20 @@ export function ThankYouSheet({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="text-6xl">🎉</div>
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Heart className="w-8 h-8 text-primary fill-primary" />
+          </div>
 
           <div className="space-y-2">
-            <h3 className="text-xl font-bold text-green-600">
-              Pagamento Confirmado!
-            </h3>
+            <p className="text-lg font-medium text-foreground">
+              Agradecemos pelo presente!
+            </p>
             <p className="text-foreground/70">
               Você contribuiu com <strong>{brl(value)}</strong> para{" "}
               <strong>{giftName}</strong>.
             </p>
             <p className="text-sm text-muted-foreground">
-              Obrigado pelo carinho! ❤️
+              Obrigado pelo carinho! ♥
             </p>
           </div>
 

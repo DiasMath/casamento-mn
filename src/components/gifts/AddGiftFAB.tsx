@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,9 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
   const [total, setTotal] = useState("");
   const [category, setCategory] = useState<GiftCategory>("outros");
   const [priority, setPriority] = useState<GiftPriority>("media");
+  const [chaMode, setChaMode] = useState(false);
+  const [buyLink, setBuyLink] = useState("");
+  const [noValue, setNoValue] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -53,7 +57,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       const { validTitle, totalNum, validMarca } = validateGiftData(
         title,
         imageUrl,
-        total,
+        chaMode ? "1" : total,
         undefined,
         marca,
       );
@@ -62,11 +66,14 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
         title: validTitle,
         marca: validMarca,
         image: imageUrl,
-        total: totalNum,
+        total: chaMode || noValue ? 1 : totalNum,
         raised: 0,
         hidden: false,
         category,
         priority,
+        chaMode,
+        buyLink: chaMode ? buyLink : "",
+        noValue,
       });
 
       toast.success("Presente adicionado!");
@@ -78,6 +85,9 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
       setTotal("");
       setCategory("outros");
       setPriority("media");
+      setChaMode(false);
+      setBuyLink("");
+      setNoValue(false);
     } catch (error: any) {
       toast.error(error.message || "Erro ao adicionar");
     } finally {
@@ -132,17 +142,47 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
               disabled={loading}
             />
           </div>
-          <div>
-            <Label htmlFor="total">Valor Total (R$)</Label>
-            <Input
-              id="total"
-              type="number"
-              step="0.01"
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
-              required
+          <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
+            <Checkbox
+              id="chaMode"
+              checked={chaMode}
+              onCheckedChange={(v) => setChaMode(v === true)}
+              disabled={loading}
+              className="mt-0.5"
             />
+            <Label
+              htmlFor="chaMode"
+              className="text-sm text-muted-foreground leading-snug cursor-pointer"
+            >
+              Presente para o chá de panela (modo reserva)
+            </Label>
           </div>
+          {chaMode && (
+            <div>
+              <Label htmlFor="buyLink">Link de compra online (Opcional)</Label>
+              <Input
+                id="buyLink"
+                type="url"
+                value={buyLink}
+                onChange={(e) => setBuyLink(e.target.value)}
+                placeholder="https://www.exemplo.com/produto"
+                className="h-11 rounded-xl mt-1.5"
+              />
+            </div>
+          )}
+          {!chaMode && !noValue && (
+            <div>
+              <Label htmlFor="total">Valor Total (R$)</Label>
+              <Input
+                id="total"
+                type="number"
+                step="0.01"
+                value={total}
+                onChange={(e) => setTotal(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Categoria</Label>
@@ -181,6 +221,23 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
               </Select>
             </div>
           </div>
+          {!chaMode && (
+            <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
+              <Checkbox
+                id="noValue"
+                checked={noValue}
+                onCheckedChange={(v) => setNoValue(v === true)}
+                disabled={loading}
+                className="mt-0.5"
+              />
+              <Label
+                htmlFor="noValue"
+                className="text-sm text-muted-foreground leading-snug cursor-pointer"
+              >
+                Presente sem valor definido
+              </Label>
+            </div>
+          )}
           <Button
             type="submit"
             className="w-full rounded-full"

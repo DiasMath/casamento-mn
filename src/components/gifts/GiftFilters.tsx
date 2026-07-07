@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, X, SlidersHorizontal, Tag, Star, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 
@@ -45,20 +47,25 @@ export function GiftFilters({
   };
 
   return (
-    <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <SlidersHorizontal className="w-4 h-4" />
-          Filtros
+    <div className="bg-card border border-border/60 rounded-2xl p-4 sm:p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold">Filtrar presentes</span>
+          {hasActiveFilters && (
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded-full">
+              Ativo
+            </span>
+          )}
         </div>
         {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="h-9 text-xs gap-1 text-muted-foreground"
+            className="h-7 text-xs gap-1 rounded-full text-muted-foreground hover:text-foreground"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
             Limpar
           </Button>
         )}
@@ -67,14 +74,14 @@ export function GiftFilters({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Busca */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar presente..."
             value={filters.search}
             onChange={(e) =>
               onFilterChange({ ...filters, search: e.target.value })
             }
-            className="pl-9 h-9 rounded-xl text-sm"
+            className="pl-10 h-11 rounded-xl text-sm"
           />
         </div>
 
@@ -88,11 +95,16 @@ export function GiftFilters({
             })
           }
         >
-          <SelectTrigger className="h-9 rounded-xl text-sm">
-            <SelectValue placeholder="Categoria" />
+          <SelectTrigger className="h-11 rounded-xl text-sm">
+            <div className="flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+              <SelectValue placeholder="Categoria" />
+            </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas as categorias</SelectItem>
+            <SelectItem value="todas">
+              <span className="font-medium">Todas as categorias</span>
+            </SelectItem>
             {GIFT_CATEGORIES.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.icon} {cat.label}
@@ -111,11 +123,16 @@ export function GiftFilters({
             })
           }
         >
-          <SelectTrigger className="h-9 rounded-xl text-sm">
-            <SelectValue placeholder="Prioridade" />
+          <SelectTrigger className="h-11 rounded-xl text-sm">
+            <div className="flex items-center gap-2">
+              <Star className="w-3.5 h-3.5 text-muted-foreground" />
+              <SelectValue placeholder="Prioridade" />
+            </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas as prioridades</SelectItem>
+            <SelectItem value="todas">
+              <span className="font-medium">Todas as prioridades</span>
+            </SelectItem>
             {GIFT_PRIORITIES.map((p) => (
               <SelectItem key={p.value} value={p.value}>
                 {p.icon} {p.label}
@@ -126,17 +143,21 @@ export function GiftFilters({
 
         {/* Mostrar concluídos (apenas admin) */}
         {isAdmin && (
-          <label className="flex items-center gap-2 h-9 px-3 rounded-xl border border-input cursor-pointer hover:bg-accent/50 transition-colors">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2 h-11 px-3.5 rounded-xl border border-input shadow-xs">
+            <Checkbox
+              id="showCompleted"
               checked={filters.showCompleted}
-              onChange={(e) =>
-                onFilterChange({ ...filters, showCompleted: e.target.checked })
+              onCheckedChange={(v) =>
+                onFilterChange({ ...filters, showCompleted: v === true })
               }
-              className="rounded border-input w-4 h-4"
             />
-            <span className="text-sm">Concluídos</span>
-          </label>
+            <Label
+              htmlFor="showCompleted"
+              className="text-sm cursor-pointer select-none"
+            >
+              Concluídos
+            </Label>
+          </div>
         )}
       </div>
     </div>

@@ -1,15 +1,22 @@
 import { MapPin, Clock, Calendar } from "lucide-react";
-import { WEDDING_DATE, WEDDING_VENUE } from "@/lib/constants";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower, Branch, Garland } from "@/components/decor/Flower";
 
-const formattedDate = WEDDING_DATE.toLocaleDateString("pt-BR", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
 export function OndeVaiSer() {
+  const { settings } = useSiteSettings();
+
+  const weddingDate = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`);
+  const formattedDate = weddingDate.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const formattedTime = weddingDate.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <section
       id="casamento"
@@ -80,9 +87,9 @@ export function OndeVaiSer() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Local</p>
-                <p className="font-medium">{WEDDING_VENUE.name}</p>
+                <p className="font-medium">{settings.weddingVenueName}</p>
                 <p className="text-sm text-foreground/70">
-                  {WEDDING_VENUE.address}
+                  {settings.weddingVenueAddress}
                 </p>
               </div>
             </div>
@@ -101,7 +108,7 @@ export function OndeVaiSer() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Horário</p>
-                <p className="font-medium">Cerimônia às 16h00</p>
+                <p className="font-medium">Cerimônia às {formattedTime}</p>
                 <p className="text-sm text-foreground/70">
                   Recepção logo após a cerimônia
                 </p>
@@ -111,7 +118,7 @@ export function OndeVaiSer() {
           <div className="rounded-3xl overflow-hidden shadow-[var(--shadow-card)] border border-border/60 min-h-[300px] bg-pastel-gradient relative">
             <iframe
               title="Mapa"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(WEDDING_VENUE.city)}&output=embed`}
+              src={settings.weddingMapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(`${settings.weddingVenueName} ${settings.weddingVenueAddress}`)}&output=embed`}
               className="absolute inset-0 w-full h-full"
               loading="lazy"
             />

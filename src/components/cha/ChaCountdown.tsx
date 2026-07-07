@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { CHA_DATE } from "@/lib/constants";
-
-function diff() {
-  const ms = Math.max(0, CHA_DATE.getTime() - Date.now());
-  const d = Math.floor(ms / 86400000);
-  const h = Math.floor((ms % 86400000) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  return { d, h, m, s };
-}
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function ChaCountdown() {
+  const { settings } = useSiteSettings();
+  const chaDate = new Date(`${settings.chaDate}T${settings.chaTime}:00`);
+
+  function diff() {
+    const ms = Math.max(0, chaDate.getTime() - Date.now());
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor((ms % 86400000) / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    return { d, h, m, s };
+  }
+
   const [t, setT] = useState(diff);
   useEffect(() => {
     const i = setInterval(() => setT(diff()), 1000);
