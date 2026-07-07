@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 import { Index } from "./routes/index";
 import { PresentList } from "./routes/present-list";
@@ -32,6 +33,24 @@ function AppLayout() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function HomeRoute() {
+  const { settings, loading } = useSiteSettings();
+  if (loading) return null;
+  if (settings.chaDePanelaEnabled) {
+    return <Navigate to="/cha-de-panela" replace />;
+  }
+  return <Index />;
+}
+
+function ChaRoute() {
+  const { settings, loading } = useSiteSettings();
+  if (loading) return null;
+  if (!settings.chaDePanelaEnabled) {
+    return <Navigate to="/" replace />;
+  }
+  return <ChaDePanela />;
 }
 
 function NotFound() {
@@ -55,11 +74,11 @@ createRoot(rootElement).render(
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/cha-de-panela" replace />} />
+          <Route path="/" element={<HomeRoute />} />
           <Route path="/present-list" element={<PresentList />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/painel" element={<AdminPainel />} />
-          <Route path="/cha-de-panela" element={<ChaDePanela />} />
+          <Route path="/cha-de-panela" element={<ChaRoute />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

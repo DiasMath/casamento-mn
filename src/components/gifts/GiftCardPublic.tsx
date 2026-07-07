@@ -1,10 +1,11 @@
-import { Check, Gift, ExternalLink, Gem, Lock } from "lucide-react";
+import { Check, ExternalLink, Gem, Lock } from "lucide-react";
 import { useState, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Gift as GiftType } from "@/lib/firestoreService";
 import { PaymentSheet } from "./PaymentSheet";
 import { ThankYouSheet } from "./ThankYouSheet";
@@ -17,6 +18,8 @@ interface GiftCardPublicProps {
 }
 
 export function GiftCardPublic({ gift }: GiftCardPublicProps) {
+  const { settings } = useSiteSettings();
+  const isChaActive = settings.chaDePanelaEnabled && gift.chaMode;
   const {
     localGift,
     payOpen,
@@ -103,7 +106,7 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
             >
               <Lock className="w-4 h-4 mr-1.5" /> Reservado
             </Button>
-          ) : localGift.chaMode ? (
+          ) : isChaActive ? (
             <>
               {/* Modo Chá de Panela: Reserva */}
               <div className="space-y-2 mt-auto">
@@ -196,7 +199,7 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
         </div>
       </div>
 
-      {!localGift.chaMode && (
+      {!isChaActive && (
         <PaymentSheet
           gift={localGift}
           open={payOpen}
@@ -205,7 +208,7 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
           onReserveSuccess={handleReserveSuccess}
         />
       )}
-      {localGift.chaMode && (
+      {isChaActive && (
         <ReserveGiftSheet
           gift={localGift}
           open={reserveOpen}

@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical, Gift, Undo2, Loader2, ExternalLink, Gem, Lock } from "lucide-react";
+import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical, Undo2, Loader2, ExternalLink, Gem, Lock } from "lucide-react";
 import { useCallback, useEffect, useState, memo } from "react";
 import { devLog } from "@/lib/devLog";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
@@ -23,6 +24,8 @@ interface GiftCardProps {
 
 const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
   const { isAdmin } = useAuth();
+  const { settings } = useSiteSettings();
+  const isChaActive = settings.chaDePanelaEnabled && gift.chaMode;
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -162,7 +165,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
         {/* Botões de Ação (Apenas Admin) com Animações */}
         {isAdmin && (
           <div className="absolute top-2 right-2 z-10 flex gap-2">
-            {!completed && !localGift.chaMode && (
+            {!completed && !isChaActive && (
               <Button
                 size="icon"
                 variant="secondary"
@@ -301,7 +304,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
                 </Button>
               )}
             </div>
-          ) : localGift.chaMode ? (
+          ) : isChaActive ? (
             <>
               {/* Modo Chá de Panela: Reserva */}
               <div className="space-y-2 mt-auto">
@@ -407,7 +410,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
         onOpenChange={setDeleteOpen}
         onGiftDeleted={onUpdate}
       />
-      {!localGift.chaMode && (
+      {!isChaActive && (
         <PaymentSheet
           gift={localGift}
           open={payOpen}
@@ -416,7 +419,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
           onReserveSuccess={handleReserveSuccess}
         />
       )}
-      {localGift.chaMode && (
+      {isChaActive && (
         <ReserveGiftSheet
           gift={localGift}
           open={reserveOpen}

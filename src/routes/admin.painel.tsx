@@ -108,7 +108,7 @@ export function AdminPainel() {
 
   // Valor líquido (desconta 1% de taxa do PIX)
   const totalNet = contributions.reduce((s, c) => {
-    const fee = c.method === "pix" ? 0.01 : 0;
+    const fee = c.paymentMethod === "pix" ? 0.01 : 0;
     return s + c.value * (1 - fee);
   }, 0);
   const remainingNet = Math.max(0, totalGoal - Math.round(totalNet));
@@ -168,12 +168,19 @@ export function AdminPainel() {
       value: rsvps.length.toString(),
       icon: CheckCircle,
     },
-    {
-      label: "Presentes Reservados",
-      value: reservedCount.toString(),
-      icon: PackageCheck,
-      subtext: reservedCount > 0 ? `${reservedGifts.map((g) => g.title).slice(0, 3).join(", ")}${reservedCount > 3 ? "..." : ""}` : "Nenhum reserva ainda",
-    },
+    ...(settings.chaDePanelaEnabled
+      ? [
+          {
+            label: "Presentes Reservados",
+            value: reservedCount.toString(),
+            icon: PackageCheck,
+            subtext:
+              reservedCount > 0
+                ? `${reservedGifts.map((g) => g.title).slice(0, 3).join(", ")}${reservedCount > 3 ? "..." : ""}`
+                : "Nenhum reserva ainda",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -237,7 +244,9 @@ export function AdminPainel() {
           <CategoryStats gifts={gifts} />
           <PriorityStats gifts={gifts} />
         </div>
-        <ReservedGiftsSection gifts={gifts} onUpdate={loadData} />
+        {settings.chaDePanelaEnabled && (
+          <ReservedGiftsSection gifts={gifts} onUpdate={loadData} />
+        )}
       </div>
 
       <div className="space-y-8">

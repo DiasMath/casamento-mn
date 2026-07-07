@@ -528,6 +528,7 @@ export interface SiteSettings {
   chaTime: string;
   chaVenueAddress: string;
   chaMapsUrl: string;
+  chaDePanelaEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -542,6 +543,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   chaTime: "14:00",
   chaVenueAddress: "Rua Parintis, 516 — RJ",
   chaMapsUrl: "",
+  chaDePanelaEnabled: true,
 };
 
 export const getSiteSettings = async (): Promise<SiteSettings> => {

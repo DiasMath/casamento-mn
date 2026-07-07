@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Save, Loader2 } from "lucide-react";
+import { Settings, Save, Loader2, PartyPopper, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { devLog } from "@/lib/devLog";
 import {
@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,7 @@ export function GeneralSettingsDialog() {
     }
   };
 
-  const update = (key: keyof SiteSettings, value: string) => {
+  const update = (key: keyof SiteSettings, value: string | boolean) => {
     if (!settings) return;
     setSettings({ ...settings, [key]: value });
   };
@@ -77,6 +78,33 @@ export function GeneralSettingsDialog() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Modo do Site */}
+            <div className="p-4 bg-secondary/30 rounded-2xl border border-border/60">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {settings.chaDePanelaEnabled ? (
+                    <PartyPopper className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Gift className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {settings.chaDePanelaEnabled ? "Chá de Panela ativo" : "Modo Casamento"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {settings.chaDePanelaEnabled
+                        ? "Rota /cha-de-panela ativa, presentes podem ser reservados"
+                        : "Site normal, todos os presentes usam pagamento"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.chaDePanelaEnabled}
+                  onCheckedChange={(v) => update("chaDePanelaEnabled", v)}
+                />
+              </div>
+            </div>
+
             {/* Noivos */}
             <div>
               <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wide">

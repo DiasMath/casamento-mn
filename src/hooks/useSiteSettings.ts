@@ -8,9 +8,12 @@ const DEFAULT_SETTINGS: SiteSettings = {
   weddingTime: "15:00",
   weddingVenueName: "Quinta dos Jardins",
   weddingVenueAddress: "Estrada das Acácias, 1200 — Itaipava, RJ",
+  weddingMapsUrl: "",
   chaDate: "2026-09-30",
   chaTime: "14:00",
   chaVenueAddress: "Rua Parintis, 516 — RJ",
+  chaMapsUrl: "",
+  chaDePanelaEnabled: true,
 };
 
 export function useSiteSettings() {

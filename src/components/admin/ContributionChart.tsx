@@ -47,14 +47,14 @@ function groupByPeriod(
   }
 
   const filtered = contributions.filter((c) => {
-    const d = c.date?.toDate ? c.date.toDate() : new Date(c.date);
+    const d = c.date && typeof c.date === "object" && "toDate" in c.date ? c.date.toDate() : new Date(c.date as string | number);
     return d >= cutoff;
   });
 
   const grouped: Record<string, number> = {};
 
   filtered.forEach((c) => {
-    const d = c.date?.toDate ? c.date.toDate() : new Date(c.date);
+    const d = c.date && typeof c.date === "object" && "toDate" in c.date ? c.date.toDate() : new Date(c.date as string | number);
     let key: string;
 
     if (period === "7d" || period === "30d") {

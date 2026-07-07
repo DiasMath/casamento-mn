@@ -24,6 +24,7 @@ import { updateGift, Gift } from "@/lib/firestoreService";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { ImageUploader } from "./ImageUploader";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
@@ -40,6 +41,7 @@ export function EditGiftDialog({
   onOpenChange,
   onGiftUpdated,
 }: EditGiftDialogProps) {
+  const { settings } = useSiteSettings();
   const [title, setTitle] = useState(gift.title);
   const [marca, setMarca] = useState(gift.marca || "");
   const [image, setImage] = useState(gift.image);
@@ -147,32 +149,36 @@ export function EditGiftDialog({
               placeholder="Ex: Jogo de Pratos"
             />
           </div>
-          <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
-            <Checkbox
-              id="chaMode"
-              checked={chaMode}
-              onCheckedChange={(v) => setChaMode(v === true)}
-              className="mt-0.5"
-            />
-            <Label
-              htmlFor="chaMode"
-              className="text-sm text-muted-foreground leading-snug cursor-pointer"
-            >
-              Presente para o chá de panela (modo reserva)
-            </Label>
-          </div>
-          {chaMode && (
-            <div>
-              <Label htmlFor="g-buyLink">Link de compra online (Opcional)</Label>
-              <Input
-                id="g-buyLink"
-                type="url"
-                value={buyLink}
-                onChange={(e) => setBuyLink(e.target.value)}
-                className="h-11 rounded-xl mt-1.5"
-                placeholder="https://www.exemplo.com/produto"
-              />
-            </div>
+          {settings.chaDePanelaEnabled && (
+            <>
+              <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-xl">
+                <Checkbox
+                  id="chaMode"
+                  checked={chaMode}
+                  onCheckedChange={(v) => setChaMode(v === true)}
+                  className="mt-0.5"
+                />
+                <Label
+                  htmlFor="chaMode"
+                  className="text-sm text-muted-foreground leading-snug cursor-pointer"
+                >
+                  Presente para o chá de panela (modo reserva)
+                </Label>
+              </div>
+              {chaMode && (
+                <div>
+                  <Label htmlFor="g-buyLink">Link de compra online (Opcional)</Label>
+                  <Input
+                    id="g-buyLink"
+                    type="url"
+                    value={buyLink}
+                    onChange={(e) => setBuyLink(e.target.value)}
+                    className="h-11 rounded-xl mt-1.5"
+                    placeholder="https://www.exemplo.com/produto"
+                  />
+                </div>
+              )}
+            </>
           )}
           {!chaMode && !noValue && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
