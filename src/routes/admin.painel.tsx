@@ -135,8 +135,10 @@ export function AdminPainel() {
   const diffTime = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`).getTime() - new Date().getTime();
   const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  // Métricas de RSVP
-  const totalPeopleConfirmed = rsvps.reduce(
+  // Métricas de RSVP (apenas confirmados)
+  const attendingRsvps = rsvps.filter((r) => r.attending !== false);
+  const declinedRsvps = rsvps.filter((r) => r.attending === false);
+  const totalPeopleConfirmed = attendingRsvps.reduce(
     (s, r) => s + (Number(r.guestsCount) || 1),
     0,
   );
@@ -174,8 +176,9 @@ export function AdminPainel() {
     },
     {
       label: "Famílias/Grupos",
-      value: rsvps.length.toString(),
+      value: `${attendingRsvps.length}/${rsvps.length}`,
       icon: CheckCircle,
+      subtext: `${declinedRsvps.length} recusaram`,
     },
     ...(settings.chaDePanelaEnabled
       ? [
@@ -455,6 +458,9 @@ export function AdminPainel() {
                     Nome
                   </th>
                   <th className="px-6 py-3 font-bold text-center border-b border-border">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 font-bold text-center border-b border-border">
                     Dependentes
                   </th>
                   <th className="px-6 py-3 font-bold text-center border-b border-border">
@@ -466,7 +472,7 @@ export function AdminPainel() {
                 {rsvps.map((r) => (
                   <tr
                     key={r.id}
-                    className="hover:bg-muted/20 transition-colors"
+                    className={`hover:bg-muted/20 transition-colors ${r.attending === false ? "opacity-60" : ""}`}
                   >
                     <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap">
                       {formatDate(r.confirmedAt)}
@@ -479,11 +485,22 @@ export function AdminPainel() {
                         </p>
                       )}
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      {r.attending === false ? (
+                        <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                          Recusou
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                          Confirmado
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-center text-sm text-muted-foreground">
-                      {Math.max(0, r.guestsCount - 1)}
+                      {r.attending === false ? "-" : Math.max(0, r.guestsCount - 1)}
                     </td>
                     <td className="px-6 py-4 text-center font-bold text-primary">
-                      {r.guestsCount}
+                      {r.attending === false ? "-" : r.guestsCount}
                     </td>
                   </tr>
                 ))}
@@ -493,7 +510,7 @@ export function AdminPainel() {
           {/* Mobile: cards */}
           <div className="md:hidden divide-y">
             {rsvps.map((r) => (
-              <div key={r.id} className="p-4 space-y-2">
+              <div key={r.id} className={`p-4 space-y-2 ${r.attending === false ? "opacity-60" : ""}`}>
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium">{r.name}</p>
@@ -501,16 +518,29 @@ export function AdminPainel() {
                       <p className="text-xs text-muted-foreground">{r.email}</p>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(r.confirmedAt)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {r.attending === false ? (
+                      <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                        Recusou
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                        Confirmado
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(r.confirmedAt)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Total grupo:</span>
-                  <span className="font-bold text-primary">
-                    {r.guestsCount} pessoas
-                  </span>
-                </div>
+                {r.attending !== false && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Total grupo:</span>
+                    <span className="font-bold text-primary">
+                      {r.guestsCount} pessoas
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
             {rsvps.length === 0 && (

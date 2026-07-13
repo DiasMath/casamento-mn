@@ -17,7 +17,7 @@ interface ThankYouSheetProps {
   giftName: string;
 }
 
-const DURATION = 10;
+const DURATION = 30;
 
 export function ThankYouSheet({
   open,

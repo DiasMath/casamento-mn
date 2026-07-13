@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, Sparkles, Loader2, Heart, X } from "lucide-react";
 import { Flower, Branch, Vine } from "@/components/decor/Flower";
-import { addRSVP } from "@/lib/firestoreService";
+import { addRSVP, declineRSVP } from "@/lib/firestoreService";
 
 const PHONE_REGEX = /^\(\d{2}\)\s?9\d{4}-?\d{4}$/;
 
@@ -81,6 +81,26 @@ export function RSVP() {
     setPhone("");
     setCompanions("0");
     setPhoneError("");
+  };
+
+  const handleDecline = async () => {
+    if (!name.trim()) {
+      toast.error("Por favor, informe seu nome.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await declineRSVP(name.trim());
+      setDone(true);
+      toast.info("Sentiremos sua falta!", {
+        description: `Obrigado por avisar, ${name.split(" ")[0]}.`,
+      });
+    } catch (error) {
+      devLog.error("Erro ao registrar recusa:", error);
+      toast.error("Erro ao registrar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -171,18 +191,38 @@ export function RSVP() {
         {/* Estado de sucesso */}
         {done ? (
           <div className="mt-10 bg-card rounded-3xl p-8 sm:p-10 border border-border/60 shadow-[var(--shadow-card)] text-center space-y-4 animate-in fade-in duration-500">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Heart className="w-8 h-8 text-primary fill-primary/40" />
+            <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${attending ? "bg-primary/10" : "bg-muted"}`}>
+              {attending ? (
+                <Heart className="w-8 h-8 text-primary fill-primary/40" />
+              ) : (
+                <X className="w-8 h-8 text-muted-foreground" />
+              )}
             </div>
-            <h3 className="text-xl font-semibold">Presença confirmada!</h3>
+            <h3 className="text-xl font-semibold">
+              {attending ? "Presença confirmada!" : "Registro confirmado"}
+            </h3>
             <p className="text-muted-foreground">
-              Obrigado,{" "}
-              <span className="font-medium text-foreground">
-                {name.split(" ")[0]}
-              </span>
-              !
-              <br />
-              Estamos muito felizes em ter você conosco.
+              {attending ? (
+                <>
+                  Obrigado,{" "}
+                  <span className="font-medium text-foreground">
+                    {name.split(" ")[0]}
+                  </span>
+                  !
+                  <br />
+                  Estamos muito felizes em ter você conosco.
+                </>
+              ) : (
+                <>
+                  Obrigado por avisar,{" "}
+                  <span className="font-medium text-foreground">
+                    {name.split(" ")[0]}
+                  </span>
+                  .
+                  <br />
+                  Sentiremos sua falta!
+                </>
+              )}
             </p>
             <Button
               onClick={resetForm}
@@ -222,15 +262,42 @@ export function RSVP() {
             </div>
             <h3 className="text-xl font-semibold">Sentiremos sua falta!</h3>
             <p className="text-muted-foreground">
-              Não se preocupe, vamos sentir sua falta. Um abraço!
+              Por favor, nos informe seu nome para que possamos registrar.
             </p>
-            <Button
-              onClick={() => setAttending(null)}
-              variant="outline"
-              className="rounded-full mt-2"
-            >
-              Mudou de ideia? Voltar
-            </Button>
+            <div className="max-w-xs mx-auto">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Seu nome completo"
+                className="h-12 rounded-xl text-center"
+                disabled={isSubmitting}
+                autoComplete="name"
+              />
+            </div>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={handleDecline}
+                disabled={isSubmitting || !name.trim()}
+                className="rounded-full"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 mr-2" />
+                )}
+                Confirmar recusa
+              </Button>
+              <Button
+                onClick={() => {
+                  setAttending(null);
+                  setName("");
+                }}
+                variant="outline"
+                className="rounded-full"
+              >
+                Voltar
+              </Button>
+            </div>
           </div>
         ) : (
           /* Formulário de confirmação */
@@ -248,6 +315,7 @@ export function RSVP() {
                 placeholder="Como devemos chamar você?"
                 className="h-12 rounded-xl mt-2"
                 disabled={isSubmitting}
+                autoComplete="name"
               />
             </div>
             <div>
@@ -261,6 +329,7 @@ export function RSVP() {
                 placeholder="(11) 99999-9999"
                 className={`h-12 rounded-xl mt-2 ${phoneError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                 disabled={isSubmitting}
+                autoComplete="tel"
               />
               {phoneError && (
                 <p className="text-xs text-red-500 mt-1">{phoneError}</p>

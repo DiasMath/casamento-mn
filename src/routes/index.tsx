@@ -11,13 +11,15 @@ import { Link } from "react-router-dom";
 export function Index() {
   return (
     <SiteLayout>
-      <Hero />
-      <Countdown />
-      <NossaHistoria />
-      <OndeVaiSer />
-      <GiftListSection />
-      <RSVP />
-      <Recados />
+      <main id="main-content">
+        <Hero />
+        <Countdown />
+        <NossaHistoria />
+        <OndeVaiSer />
+        <GiftListSection />
+        <RSVP />
+        <Recados />
+      </main>
     </SiteLayout>
   );
 }

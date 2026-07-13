@@ -37,6 +37,12 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/80 border-b border-border/60">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg"
+      >
+        Pular para o conteúdo
+      </a>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-2 group cursor-pointer">
           <Heart className="w-5 h-5 text-primary fill-primary/40 transition group-hover:scale-110" />

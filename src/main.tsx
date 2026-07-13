@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -13,21 +13,34 @@ import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-import { Index } from "./routes/index";
-import { PresentList } from "./routes/present-list";
-import { AdminLogin } from "./routes/admin.login";
-import { AdminPainel } from "./routes/admin.painel";
-import { ChaDePanela } from "./routes/cha-de-panela";
+const Index = lazy(() => import("./routes/index").then((m) => ({ default: m.Index })));
+const PresentList = lazy(() => import("./routes/present-list").then((m) => ({ default: m.PresentList })));
+const AdminLogin = lazy(() => import("./routes/admin.login").then((m) => ({ default: m.AdminLogin })));
+const AdminPainel = lazy(() => import("./routes/admin.painel").then((m) => ({ default: m.AdminPainel })));
+const ChaDePanela = lazy(() => import("./routes/cha-de-panela").then((m) => ({ default: m.ChaDePanela })));
 
 const queryClient = new QueryClient();
+
+function LoadingSpinner() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function AppLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ViewModeProvider>
-          <Outlet />
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
           <Toaster position="top-center" />
         </ViewModeProvider>
       </AuthProvider>

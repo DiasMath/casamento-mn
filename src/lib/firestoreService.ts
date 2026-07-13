@@ -50,8 +50,9 @@ export interface RSVP {
   id: string;
   name: string;
   email?: string;
-  guestsCount: number; // Total de pessoas (incluindo quem confirmou)
-  confirmedAt: any; // Timestamp do Firestore
+  guestsCount: number;
+  attending: boolean;
+  confirmedAt: any;
 }
 
 export interface Message {
@@ -236,6 +237,7 @@ export const getRSVPs = async (): Promise<RSVP[]> => {
       name: data.name,
       email: data.email,
       guestsCount: Number(data.guestsCount) || 1,
+      attending: data.attending ?? true,
       confirmedAt: data.confirmedAt,
     } as RSVP;
   });
@@ -363,6 +365,21 @@ export const addRSVP = async (
     name: name.trim(),
     phone: phone.trim(),
     guestsCount: Number(guestsCount) || 1,
+    attending: true,
+    confirmedAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+/**
+ * Registra uma recusa de presença (RSVP decline)
+ */
+export const declineRSVP = async (name: string): Promise<string> => {
+  const rsvpCol = collection(getDb(), "rsvps");
+  const docRef = await addDoc(rsvpCol, {
+    name: name.trim(),
+    guestsCount: 0,
+    attending: false,
     confirmedAt: serverTimestamp(),
   });
   return docRef.id;
@@ -411,20 +428,38 @@ export const SITE_IMAGE_DEFAULTS: SiteImages = {
   story4: "",
 };
 
+const IMAGES_CACHE_KEY = "siteImagesCache";
+let imagesCachePromise: Promise<SiteImages> | null = null;
+
 export const getSiteImages = async (): Promise<SiteImages> => {
+  // Return cached promise if available
+  if (imagesCachePromise) return imagesCachePromise;
+
+  // Check sessionStorage
   try {
-    const docRef = doc(getDb(), "settings", "siteImages");
-    const docSnap = await import("firebase/firestore").then((m) =>
-      m.getDoc(docRef),
-    );
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      return { ...SITE_IMAGE_DEFAULTS, ...data } as SiteImages;
+    const cached = sessionStorage.getItem(IMAGES_CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch {}
+
+  imagesCachePromise = (async () => {
+    try {
+      const docRef = doc(getDb(), "settings", "siteImages");
+      const docSnap = await import("firebase/firestore").then((m) =>
+        m.getDoc(docRef),
+      );
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const result = { ...SITE_IMAGE_DEFAULTS, ...data } as SiteImages;
+        try { sessionStorage.setItem(IMAGES_CACHE_KEY, JSON.stringify(result)); } catch {}
+        return result;
+      }
+    } catch (error) {
+      devLog.error("Erro ao buscar imagens do site:", error);
     }
-  } catch (error) {
-    devLog.error("Erro ao buscar imagens do site:", error);
-  }
-  return SITE_IMAGE_DEFAULTS;
+    return SITE_IMAGE_DEFAULTS;
+  })();
+
+  return imagesCachePromise;
 };
 
 export const updateSiteImage = async (
