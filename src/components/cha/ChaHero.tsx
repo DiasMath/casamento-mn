@@ -22,6 +22,7 @@ const FALLBACKS = [
 export function ChaHero() {
   const { settings, loading: settingsLoading } = useSiteSettings();
   const [images, setImages] = useState<string[]>([]);
+  const [desktopImages, setDesktopImages] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -29,7 +30,7 @@ export function ChaHero() {
 
   useEffect(() => {
     getSiteImages().then((imgs) => {
-      const list = [
+      const mobileList = [
         imgs.carousel1 || FALLBACKS[0],
         imgs.carousel2 || FALLBACKS[1],
         imgs.carousel3 || FALLBACKS[2],
@@ -37,7 +38,16 @@ export function ChaHero() {
         imgs.carousel5 || FALLBACKS[4],
         imgs.carousel6 || FALLBACKS[5],
       ];
-      setImages(list);
+      const desktopList = [
+        imgs.carousel1Desktop || mobileList[0],
+        imgs.carousel2Desktop || mobileList[1],
+        imgs.carousel3Desktop || mobileList[2],
+        imgs.carousel4Desktop || mobileList[3],
+        imgs.carousel5Desktop || mobileList[4],
+        imgs.carousel6Desktop || mobileList[5],
+      ];
+      setImages(mobileList);
+      setDesktopImages(desktopList);
       setLoaded(true);
     });
   }, []);
@@ -81,15 +91,19 @@ export function ChaHero() {
       onTouchEnd={handleTouchEnd}
     >
       {isReady && images.map((src, i) => (
-        <img
-          key={`${src}-${i}`}
-          src={src}
-          alt={`Foto do casal ${i + 1}`}
-          loading={i === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
-            i === current ? "opacity-100" : "opacity-0"
-          }`}
-        />
+        <picture key={`${src}-${i}`}>
+          {desktopImages[i] && (
+            <source media="(min-width: 640px)" srcSet={desktopImages[i]} />
+          )}
+          <img
+            src={src}
+            alt={`Foto do casal ${i + 1}`}
+            loading={i === 0 ? "eager" : "lazy"}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
+              i === current ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        </picture>
       ))}
 
       {isReady && (

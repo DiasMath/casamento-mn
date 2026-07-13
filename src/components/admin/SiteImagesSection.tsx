@@ -22,26 +22,51 @@ import { CropModal } from "@/components/gifts/CropModal";
 
 const CAROUSEL_KEYS: SiteImageKey[] = [
   "carousel1",
+  "carousel1Desktop",
   "carousel2",
+  "carousel2Desktop",
   "carousel3",
+  "carousel3Desktop",
   "carousel4",
+  "carousel4Desktop",
   "carousel5",
+  "carousel5Desktop",
   "carousel6",
+  "carousel6Desktop",
 ];
 
-const STORY_KEYS: SiteImageKey[] = ["story1", "story2", "story3", "story4"];
+const STORY_KEYS: SiteImageKey[] = [
+  "story1",
+  "story1Desktop",
+  "story2",
+  "story2Desktop",
+  "story3",
+  "story3Desktop",
+  "story4",
+  "story4Desktop",
+];
 
 const IMAGE_LABELS: Record<SiteImageKey, string> = {
-  carousel1: "Imagem 1",
-  carousel2: "Imagem 2",
-  carousel3: "Imagem 3",
-  carousel4: "Imagem 4",
-  carousel5: "Imagem 5",
-  carousel6: "Imagem 6",
-  story1: "Capítulo 1 — O primeiro olhar",
-  story2: "Capítulo 2 — Cartas e ligações",
-  story3: "Capítulo 3 — Nossa primeira viagem",
-  story4: "Capítulo 4 — O pedido",
+  carousel1: "Imagem 1 (Mobile)",
+  carousel2: "Imagem 2 (Mobile)",
+  carousel3: "Imagem 3 (Mobile)",
+  carousel4: "Imagem 4 (Mobile)",
+  carousel5: "Imagem 5 (Mobile)",
+  carousel6: "Imagem 6 (Mobile)",
+  carousel1Desktop: "Imagem 1 (Desktop)",
+  carousel2Desktop: "Imagem 2 (Desktop)",
+  carousel3Desktop: "Imagem 3 (Desktop)",
+  carousel4Desktop: "Imagem 4 (Desktop)",
+  carousel5Desktop: "Imagem 5 (Desktop)",
+  carousel6Desktop: "Imagem 6 (Desktop)",
+  story1: "Capítulo 1 (Mobile)",
+  story2: "Capítulo 2 (Mobile)",
+  story3: "Capítulo 3 (Mobile)",
+  story4: "Capítulo 4 (Mobile)",
+  story1Desktop: "Capítulo 1 (Desktop)",
+  story2Desktop: "Capítulo 2 (Desktop)",
+  story3Desktop: "Capítulo 3 (Desktop)",
+  story4Desktop: "Capítulo 4 (Desktop)",
 };
 
 function ImageRow({
@@ -161,10 +186,20 @@ export function SiteImagesDialog() {
     carousel4: "",
     carousel5: "",
     carousel6: "",
+    carousel1Desktop: "",
+    carousel2Desktop: "",
+    carousel3Desktop: "",
+    carousel4Desktop: "",
+    carousel5Desktop: "",
+    carousel6Desktop: "",
     story1: "",
     story2: "",
     story3: "",
     story4: "",
+    story1Desktop: "",
+    story2Desktop: "",
+    story3Desktop: "",
+    story4Desktop: "",
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<SiteImageKey | null>(null);
@@ -232,7 +267,7 @@ export function SiteImagesDialog() {
             <Images className="w-4 h-4" /> Imagens
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader className="sm:pr-12 pt-1">
             <DialogTitle className="flex items-center gap-2">
               <Images className="w-5 h-5" /> Imagens do Site

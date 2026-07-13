@@ -130,19 +130,11 @@ export function EditGiftDialog({
         </DialogHeader>
         <form onSubmit={save} className="space-y-4">
           <div>
-            <Label>Imagem do Presente (Mobile)</Label>
+            <Label>Imagem do Presente</Label>
             <ImageUploader
               value={image}
               onFileReady={setImageBlob}
               hasNewFile={imageBlob !== null}
-            />
-          </div>
-          <div>
-            <Label>Imagem do Presente (Desktop) <span className="text-muted-foreground text-xs">- Opcional</span></Label>
-            <ImageUploader
-              value={imageDesktop}
-              onFileReady={setImageDesktopBlob}
-              hasNewFile={imageDesktopBlob !== null}
             />
           </div>
           <div>

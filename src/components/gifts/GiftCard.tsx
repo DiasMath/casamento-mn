@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical, Undo2, Loader2, ExternalLink, Gem, Lock } from "lucide-react";
+import { Pencil, Trash2, Check, Eye, EyeOff, FlaskConical, Undo2, Loader2, ExternalLink, Gem, Lock, Gift, Copy } from "lucide-react";
 import { useCallback, useEffect, useState, memo } from "react";
 import { devLog } from "@/lib/devLog";
 import { Progress } from "@/components/ui/progress";
@@ -8,7 +8,7 @@ import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
+import { Gift as GiftType, toggleGiftVisibility, cancelReservation, addGift } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
@@ -34,6 +34,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [cancellingReservation, setCancellingReservation] = useState(false);
+  const [duplicateGift, setDuplicateGift] = useState<GiftType | null>(null);
   const [thankYouOpen, setThankYouOpen] = useState(false);
   const [confirmedValue, setConfirmedValue] = useState(0);
 
@@ -142,6 +143,46 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
     onUpdate();
   }, [onUpdate]);
 
+  const handleDuplicate = useCallback(async () => {
+    try {
+      const newId = await addGift({
+        title: `${localGift.title} (Cópia)`,
+        marca: localGift.marca,
+        image: localGift.image,
+        imageDesktop: localGift.imageDesktop,
+        total: localGift.total,
+        raised: 0,
+        hidden: localGift.hidden,
+        category: localGift.category,
+        priority: localGift.priority,
+        chaMode: localGift.chaMode,
+        buyLink: localGift.buyLink,
+        noValue: localGift.noValue,
+      });
+      const tempGift: GiftType = {
+        id: newId,
+        title: `${localGift.title} (Cópia)`,
+        marca: localGift.marca,
+        image: localGift.image,
+        imageDesktop: localGift.imageDesktop,
+        total: localGift.total,
+        raised: 0,
+        hidden: localGift.hidden,
+        category: localGift.category,
+        priority: localGift.priority,
+        chaMode: localGift.chaMode,
+        buyLink: localGift.buyLink,
+        noValue: localGift.noValue,
+      };
+      setDuplicateGift(tempGift);
+      toast.success("Presente duplicado! Edite as informações.");
+      onUpdate();
+    } catch (error) {
+      devLog.error("Erro ao duplicar presente:", error);
+      toast.error("Erro ao duplicar presente");
+    }
+  }, [localGift, onUpdate]);
+
   return (
     <>
       <div className={`group bg-card rounded-2xl overflow-hidden border shadow-sm flex flex-col relative ${
@@ -202,6 +243,15 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="w-5 h-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 active:scale-95 bg-purple-100 text-purple-600 hover:bg-purple-200"
+              onClick={handleDuplicate}
+              title="Duplicar presente"
+            >
+              <Copy className="w-5 h-5" />
             </Button>
             <Button
               size="icon"
@@ -287,10 +337,13 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
             <div className="space-y-2 mt-auto">
               <Button
                 disabled
-                className="w-full rounded-full transition-transform bg-secondary text-muted-foreground cursor-not-allowed"
-                variant="secondary"
+                className={`w-full rounded-full transition-transform cursor-not-allowed ${
+                  localGift.priority === "premium"
+                    ? "bg-yellow-500 text-yellow-950"
+                    : "bg-primary text-primary-foreground"
+                }`}
               >
-                <Lock className="w-4 h-4 mr-2" /> Reservado
+                Reservado
               </Button>
               {isAdmin && (
                 <Button
@@ -326,9 +379,17 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
                 )}
                 <Button
                   onClick={() => setReserveOpen(true)}
-                  className="w-full rounded-full transition-transform active:scale-95 bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                  className={`w-full rounded-full transition-transform active:scale-95 ${
+                    localGift.priority === "premium"
+                      ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                      : "bg-primary text-primary-foreground hover:opacity-90"
+                  }`}
                 >
-                  <Gem className="w-4 h-4 mr-2" />
+                  {localGift.priority === "premium" ? (
+                    <Gem className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Gift className="w-4 h-4 mr-2" />
+                  )}
                   Reservar presente
                 </Button>
               </div>
@@ -343,21 +404,17 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
                   className={`w-full rounded-full transition-transform active:scale-95 ${
                     localGift.priority === "premium"
                       ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
-                      : ""
+                      : "bg-primary text-primary-foreground hover:opacity-90"
                   }`}
-                  variant={completed ? "secondary" : "default"}
                 >
                   {completed ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" /> Comprado
-                    </>
+                    <Check className="w-4 h-4 mr-2" />
                   ) : localGift.priority === "premium" ? (
-                    <>
-                      <Gem className="w-4 h-4 mr-2" /> Presentear
-                    </>
+                    <Gem className="w-4 h-4 mr-2" />
                   ) : (
-                    "Presentear"
+                    <Gift className="w-4 h-4 mr-2" />
                   )}
+                  {completed ? "Comprado" : "Presentear"}
                 </Button>
               </div>
             </>
@@ -378,23 +435,19 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
                 onClick={() => setPayOpen(true)}
                 disabled={completed}
                 className={`w-full rounded-full transition-transform active:scale-95 ${
-                  localGift.priority === "premium" && !completed
+                  localGift.priority === "premium"
                     ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
-                    : ""
+                    : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
-                variant={completed ? "secondary" : "default"}
               >
                 {completed ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" /> Comprado
-                  </>
+                  <Check className="w-4 h-4 mr-2" />
                 ) : localGift.priority === "premium" ? (
-                  <>
-                    <Gem className="w-4 h-4 mr-2" /> Presentear
-                  </>
+                  <Gem className="w-4 h-4 mr-2" />
                 ) : (
-                  "Presentear"
+                  <Gift className="w-4 h-4 mr-2" />
                 )}
+                {completed ? "Comprado" : "Presentear"}
               </Button>
             </>
           )}
@@ -403,9 +456,12 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
 
       {/* Modais de CRUD e Pagamento */}
       <EditGiftDialog
-        gift={localGift}
-        open={editOpen}
-        onOpenChange={setEditOpen}
+        gift={duplicateGift || localGift}
+        open={editOpen || !!duplicateGift}
+        onOpenChange={(v) => {
+          setEditOpen(v);
+          if (!v) setDuplicateGift(null);
+        }}
         onGiftUpdated={onUpdate}
       />
       <DeleteGiftDialog

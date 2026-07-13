@@ -1,4 +1,4 @@
-import { Check, ExternalLink, Gem, Lock } from "lucide-react";
+import { Check, ExternalLink, Gem, Lock, Gift } from "lucide-react";
 import { useState, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -106,10 +106,13 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
             <Button
               disabled
               size="sm"
-              className="w-full rounded-full h-11 text-sm bg-secondary text-muted-foreground cursor-not-allowed mt-auto"
-              variant="secondary"
+              className={`w-full rounded-full h-11 text-sm cursor-not-allowed mt-auto ${
+                localGift.priority === "premium"
+                  ? "bg-yellow-500 text-yellow-950"
+                  : "bg-primary text-primary-foreground"
+              }`}
             >
-              <Lock className="w-4 h-4 mr-1.5" /> Reservado
+              Reservado
             </Button>
           ) : isChaActive ? (
             <>
@@ -129,9 +132,17 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
                 <Button
                   onClick={() => setReserveOpen(true)}
                   size="sm"
-                  className="w-full rounded-full h-11 text-sm transition-transform active:scale-95 bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                  className={`w-full rounded-full h-11 text-sm transition-transform active:scale-95 ${
+                    localGift.priority === "premium"
+                      ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
+                      : "bg-primary text-primary-foreground hover:opacity-90"
+                  }`}
                 >
-                  <Gem className="w-4 h-4 mr-1.5" />
+                  {localGift.priority === "premium" ? (
+                    <Gem className="w-4 h-4 mr-1.5" />
+                  ) : (
+                    <Gift className="w-4 h-4 mr-1.5" />
+                  )}
                   Reservar presente
                 </Button>
               </div>
@@ -147,21 +158,17 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
                   className={`w-full rounded-full h-11 text-sm transition-transform active:scale-95 ${
                     localGift.priority === "premium"
                       ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
-                      : ""
+                      : "bg-primary text-primary-foreground hover:opacity-90"
                   }`}
-                  variant={completed ? "secondary" : "default"}
                 >
                   {completed ? (
-                    <>
-                      <Check className="w-4 h-4 mr-1.5" /> Comprado
-                    </>
+                    <Check className="w-4 h-4 mr-1.5" />
                   ) : localGift.priority === "premium" ? (
-                    <>
-                      <Gem className="w-4 h-4 mr-1.5" /> Presentear
-                    </>
+                    <Gem className="w-4 h-4 mr-1.5" />
                   ) : (
-                    "Presentear"
+                    <Gift className="w-4 h-4 mr-1.5" />
                   )}
+                  {completed ? "Comprado" : "Presentear"}
                 </Button>
               </div>
             </>
@@ -181,23 +188,19 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
                 disabled={completed}
                 size="sm"
                 className={`w-full rounded-full h-11 text-sm transition-transform active:scale-95 ${
-                  localGift.priority === "premium" && !completed
+                  localGift.priority === "premium"
                     ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
-                    : ""
+                    : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
-                variant={completed ? "secondary" : "default"}
               >
                 {completed ? (
-                  <>
-                    <Check className="w-4 h-4 mr-1.5" /> Comprado
-                  </>
+                  <Check className="w-4 h-4 mr-1.5" />
                 ) : localGift.priority === "premium" ? (
-                  <>
-                    <Gem className="w-4 h-4 mr-1.5" /> Presentear
-                  </>
+                  <Gem className="w-4 h-4 mr-1.5" />
                 ) : (
-                  "Presentear"
+                  <Gift className="w-4 h-4 mr-1.5" />
                 )}
+                {completed ? "Comprado" : "Presentear"}
               </Button>
             </>
           )}

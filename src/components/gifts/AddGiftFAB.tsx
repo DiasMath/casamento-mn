@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner";
 import { addGift } from "@/lib/firestoreService";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
+import type { GiftCategory, GiftPriority, Gift } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { ImageUploader } from "./ImageUploader";
@@ -30,9 +30,11 @@ import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
 interface AddGiftFABProps {
   onGiftAdded: () => void;
+  duplicateFrom?: Gift | null;
+  onDuplicateClose?: () => void;
 }
 
-export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
+export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: AddGiftFABProps) {
   const { settings } = useSiteSettings();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -46,13 +48,32 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
   const [buyLink, setBuyLink] = useState("");
   const [noValue, setNoValue] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [existingImage, setExistingImage] = useState("");
+  const [existingImageDesktop, setExistingImageDesktop] = useState("");
+
+  // Open dialog when duplicateFrom is set
+  useEffect(() => {
+    if (duplicateFrom) {
+      setTitle(`${duplicateFrom.title} (Cópia)`);
+      setMarca(duplicateFrom.marca || "");
+      setExistingImage(duplicateFrom.image || "");
+      setExistingImageDesktop(duplicateFrom.imageDesktop || "");
+      setTotal(String(duplicateFrom.total));
+      setCategory(duplicateFrom.category ?? "outros");
+      setPriority(duplicateFrom.priority ?? "media");
+      setChaMode(duplicateFrom.chaMode ?? false);
+      setBuyLink(duplicateFrom.buyLink || "");
+      setNoValue(duplicateFrom.noValue ?? false);
+      setOpen(true);
+    }
+  }, [duplicateFrom]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      let imageUrl = "";
-      let imageDesktopUrl = "";
+      let imageUrl = existingImage;
+      let imageDesktopUrl = existingImageDesktop;
 
       if (imageBlob) {
         imageUrl = await uploadToCloudinary(imageBlob);
@@ -103,16 +124,25 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
     }
   };
 
+  const handleClose = (v: boolean) => {
+    setOpen(v);
+    if (!v && duplicateFrom) {
+      onDuplicateClose?.();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-50"
-          aria-label="Adicionar presente"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleClose}>
+      {!duplicateFrom && (
+        <DialogTrigger asChild>
+          <button
+            className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-50"
+            aria-label="Adicionar presente"
+          >
+            <Plus className="w-7 h-7" />
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-script text-3xl">
@@ -143,18 +173,11 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
             />
           </div>
           <div>
-            <Label>Imagem do Presente (Mobile)</Label>
+            <Label>Imagem do Presente</Label>
             <ImageUploader
+              value={existingImage}
               onFileReady={setImageBlob}
               hasNewFile={imageBlob !== null}
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <Label>Imagem do Presente (Desktop) <span className="text-muted-foreground text-xs">- Opcional</span></Label>
-            <ImageUploader
-              onFileReady={setImageDesktopBlob}
-              hasNewFile={imageDesktopBlob !== null}
               disabled={loading}
             />
           </div>

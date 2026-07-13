@@ -86,22 +86,10 @@ const getDb = () => {
 };
 
 /**
- * Ordena presentes: pendentes primeiro, reservados no meio, concluídos por último
+ * Ordena presentes: ordem alfabética
  */
 function sortGifts(gifts: Gift[]): Gift[] {
-  return [...gifts].sort((a, b) => {
-    const aCompleted = a.raised >= a.total;
-    const bCompleted = b.raised >= b.total;
-    const aReserved = !!a.reservedBy;
-    const bReserved = !!b.reservedBy;
-
-    // 0 = pendente, 1 = reservado, 2 = concluído
-    const aStatus = aCompleted ? 2 : aReserved ? 1 : 0;
-    const bStatus = bCompleted ? 2 : bReserved ? 1 : 0;
-
-    if (aStatus !== bStatus) return aStatus - bStatus;
-    return a.title.localeCompare(b.title, "pt-BR");
-  });
+  return [...gifts].sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
 }
 
 /**
@@ -397,10 +385,20 @@ export type SiteImageKey =
   | "carousel4"
   | "carousel5"
   | "carousel6"
+  | "carousel1Desktop"
+  | "carousel2Desktop"
+  | "carousel3Desktop"
+  | "carousel4Desktop"
+  | "carousel5Desktop"
+  | "carousel6Desktop"
   | "story1"
   | "story2"
   | "story3"
-  | "story4";
+  | "story4"
+  | "story1Desktop"
+  | "story2Desktop"
+  | "story3Desktop"
+  | "story4Desktop";
 
 export interface SiteImages {
   carousel1: string;
@@ -409,10 +407,20 @@ export interface SiteImages {
   carousel4: string;
   carousel5: string;
   carousel6: string;
+  carousel1Desktop: string;
+  carousel2Desktop: string;
+  carousel3Desktop: string;
+  carousel4Desktop: string;
+  carousel5Desktop: string;
+  carousel6Desktop: string;
   story1: string;
   story2: string;
   story3: string;
   story4: string;
+  story1Desktop: string;
+  story2Desktop: string;
+  story3Desktop: string;
+  story4Desktop: string;
 }
 
 export const SITE_IMAGE_DEFAULTS: SiteImages = {
@@ -422,10 +430,20 @@ export const SITE_IMAGE_DEFAULTS: SiteImages = {
   carousel4: "",
   carousel5: "",
   carousel6: "",
+  carousel1Desktop: "",
+  carousel2Desktop: "",
+  carousel3Desktop: "",
+  carousel4Desktop: "",
+  carousel5Desktop: "",
+  carousel6Desktop: "",
   story1: "",
   story2: "",
   story3: "",
   story4: "",
+  story1Desktop: "",
+  story2Desktop: "",
+  story3Desktop: "",
+  story4Desktop: "",
 };
 
 const IMAGES_CACHE_KEY = "siteImagesCache";

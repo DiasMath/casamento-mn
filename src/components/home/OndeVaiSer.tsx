@@ -118,12 +118,24 @@ export function OndeVaiSer() {
             </div>
           </div>
           <div className="rounded-3xl overflow-hidden shadow-[var(--shadow-card)] border border-border/60 min-h-[300px] bg-pastel-gradient relative">
-            <iframe
-              title="Mapa"
-              src={settings.weddingMapsUrl || `https://www.google.com/maps?q=${encodeURIComponent(`${settings.weddingVenueName} ${settings.weddingVenueAddress}`)}&output=embed`}
-              className="absolute inset-0 w-full h-full"
-              loading="lazy"
-            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center p-6 bg-gradient-to-br from-primary/5 to-accent/10">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <MapPin className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground text-lg">{settings.weddingVenueName}</p>
+                <p className="text-sm text-muted-foreground mt-1">{settings.weddingVenueAddress}</p>
+              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${settings.weddingVenueName} ${settings.weddingVenueAddress}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                <MapPin className="w-4 h-4" />
+                Abrir no Google Maps
+              </a>
+            </div>
           </div>
         </div>
       </div>
