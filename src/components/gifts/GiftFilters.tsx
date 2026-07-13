@@ -1,4 +1,4 @@
-import { Search, X, SlidersHorizontal, Tag, Star, CheckCircle2 } from "lucide-react";
+import { Search, X, SlidersHorizontal, Tag, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,8 +8,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 
@@ -34,8 +32,7 @@ export function GiftFilters({
   const hasActiveFilters =
     filters.search !== "" ||
     filters.category !== "todas" ||
-    filters.priority !== "todas" ||
-    !filters.showCompleted;
+    filters.priority !== "todas";
 
   const clearFilters = () => {
     onFilterChange({
@@ -71,7 +68,7 @@ export function GiftFilters({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Busca */}
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -140,25 +137,6 @@ export function GiftFilters({
             ))}
           </SelectContent>
         </Select>
-
-        {/* Mostrar concluídos (apenas admin) */}
-        {isAdmin && (
-          <div className="flex items-center gap-2 h-11 px-3.5 rounded-xl border border-input shadow-xs">
-            <Checkbox
-              id="showCompleted"
-              checked={filters.showCompleted}
-              onCheckedChange={(v) =>
-                onFilterChange({ ...filters, showCompleted: v === true })
-              }
-            />
-            <Label
-              htmlFor="showCompleted"
-              className="text-sm cursor-pointer select-none"
-            >
-              Concluídos
-            </Label>
-          </div>
-        )}
       </div>
     </div>
   );

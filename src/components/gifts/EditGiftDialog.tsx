@@ -46,6 +46,8 @@ export function EditGiftDialog({
   const [marca, setMarca] = useState(gift.marca || "");
   const [image, setImage] = useState(gift.image);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [imageDesktop, setImageDesktop] = useState(gift.imageDesktop || "");
+  const [imageDesktopBlob, setImageDesktopBlob] = useState<Blob | null>(null);
   const [total, setTotal] = useState(String(gift.total));
   const [raised, setRaised] = useState(String(gift.raised));
   const [category, setCategory] = useState<GiftCategory>(
@@ -64,6 +66,8 @@ export function EditGiftDialog({
       setMarca(gift.marca || "");
       setImage(gift.image);
       setImageBlob(null);
+      setImageDesktop(gift.imageDesktop || "");
+      setImageDesktopBlob(null);
       setTotal(String(gift.total));
       setRaised(String(gift.raised));
       setCategory(gift.category ?? "outros");
@@ -78,9 +82,13 @@ export function EditGiftDialog({
     e.preventDefault();
     try {
       let finalImage = image;
+      let finalImageDesktop = imageDesktop;
 
       if (imageBlob) {
         finalImage = await uploadToCloudinary(imageBlob);
+      }
+      if (imageDesktopBlob) {
+        finalImageDesktop = await uploadToCloudinary(imageDesktopBlob);
       }
 
       const { validTitle, validImage, totalNum, raisedNum, validMarca } =
@@ -90,6 +98,7 @@ export function EditGiftDialog({
         title: validTitle,
         marca: validMarca,
         image: validImage,
+        imageDesktop: finalImageDesktop,
         total: chaMode || noValue ? 1 : totalNum,
         raised: chaMode || noValue ? 0 : raisedNum,
         category,
@@ -121,11 +130,19 @@ export function EditGiftDialog({
         </DialogHeader>
         <form onSubmit={save} className="space-y-4">
           <div>
-            <Label>Imagem do Presente (Toque para Trocar)</Label>
+            <Label>Imagem do Presente (Mobile)</Label>
             <ImageUploader
               value={image}
               onFileReady={setImageBlob}
               hasNewFile={imageBlob !== null}
+            />
+          </div>
+          <div>
+            <Label>Imagem do Presente (Desktop) <span className="text-muted-foreground text-xs">- Opcional</span></Label>
+            <ImageUploader
+              value={imageDesktop}
+              onFileReady={setImageDesktopBlob}
+              hasNewFile={imageDesktopBlob !== null}
             />
           </div>
           <div>

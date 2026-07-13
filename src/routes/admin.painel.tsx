@@ -13,6 +13,7 @@ import {
   Wallet,
   Timer,
   Hourglass,
+  LogOut,
 } from "lucide-react";
 import {
   getGifts,
@@ -41,9 +42,17 @@ import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function AdminPainel() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, logout } = useAuth();
   const { settings } = useSiteSettings();
   const navigate = useNavigate();
+
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await logout();
+    navigate("/");
+  };
 
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -69,8 +78,8 @@ export function AdminPainel() {
   }, []);
 
   useEffect(() => {
-    if (!loading && !isAdmin) navigate("/admin/login");
-  }, [loading, isAdmin, navigate]);
+    if (!loading && !isAdmin && !loggingOut) navigate("/admin/login");
+  }, [loading, isAdmin, navigate, loggingOut]);
 
   useEffect(() => {
     loadData();
@@ -172,12 +181,9 @@ export function AdminPainel() {
       ? [
           {
             label: "Presentes Reservados",
-            value: reservedCount.toString(),
+            value: `${reservedCount}/${gifts.length}`,
             icon: PackageCheck,
-            subtext:
-              reservedCount > 0
-                ? `${reservedGifts.map((g) => g.title).slice(0, 3).join(", ")}${reservedCount > 3 ? "..." : ""}`
-                : "Nenhum reserva ainda",
+            subtext: `${Math.round((reservedCount / Math.max(gifts.length, 1)) * 100)}% dos presentes`,
           },
         ]
       : []),
@@ -198,6 +204,13 @@ export function AdminPainel() {
             <Link to="/">
               <ArrowLeft className="w-4 h-4" /> Voltar ao Site
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-full gap-2 text-destructive hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" /> Sair
           </Button>
         </div>
       </div>

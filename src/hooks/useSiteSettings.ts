@@ -16,14 +16,33 @@ const DEFAULT_SETTINGS: SiteSettings = {
   chaDePanelaEnabled: true,
 };
 
+const CACHE_KEY = "siteSettingsCache";
+
+function getCachedSettings(): SiteSettings | null {
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch {}
+  return null;
+}
+
+function cacheSettings(settings: SiteSettings) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(settings));
+  } catch {}
+}
+
 export function useSiteSettings() {
-  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedSettings();
+  const [settings, setSettings] = useState<SiteSettings>(cached || DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
+    if (cached) return;
     getSiteSettings()
       .then((s) => {
         setSettings(s);
+        cacheSettings(s);
       })
       .catch(() => {})
       .finally(() => {

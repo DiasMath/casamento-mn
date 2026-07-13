@@ -17,6 +17,7 @@ dist-ssr
 *.local
 .env
 *.json
+firestore.rules
 
 # Wrangler / Cloudflare
 .wrangler/

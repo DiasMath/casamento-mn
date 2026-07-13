@@ -127,11 +127,11 @@ export function ChaDePanela() {
                   Para manter a harmonia do nosso lar, pedimos que sigam a paleta de cores abaixo ao escolher os presentes
                 </p>
               </div>
-              <div className="relative flex items-end justify-center gap-5 sm:gap-8 flex-wrap">
+              <div className="relative flex items-center justify-center gap-5 sm:gap-8 flex-wrap">
                 {palette.map((color, idx) => (
                   <div key={color.id} className="flex flex-col items-center gap-3 group" style={{ animationDelay: `${idx * 100}ms` }}>
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-xl ring-2 ring-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-4 group-hover:ring-primary/40 group-hover:shadow-2xl cursor-default" style={{ backgroundColor: color.hex }} />
-                    <span className="text-sm font-bold tracking-wide text-foreground/80 uppercase">{color.name}</span>
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-[3px] sm:border-4 border-white shadow-lg sm:shadow-xl ring-2 ring-primary/20 transition-all duration-300 group-hover:scale-110 group-hover:ring-4 group-hover:ring-primary/40 group-hover:shadow-2xl cursor-default" style={{ backgroundColor: color.hex }} />
+                    <span className="text-xs sm:text-sm font-bold tracking-wide text-foreground/80 uppercase">{color.name}</span>
                   </div>
                 ))}
               </div>
@@ -155,13 +155,11 @@ export function ChaDePanela() {
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-[85vh] overflow-y-auto rounded-2xl">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                       {filteredGifts.map((g) => (
                         <GiftCard key={g.id} gift={g} onUpdate={fetchGifts} />
                       ))}
                     </div>
-                  </div>
                 )}
               </div>
             </div>

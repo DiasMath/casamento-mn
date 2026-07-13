@@ -3,7 +3,9 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower, Branch, Garland } from "@/components/decor/Flower";
 
 export function OndeVaiSer() {
-  const { settings } = useSiteSettings();
+  const { settings, loading: settingsLoading } = useSiteSettings();
+
+  if (settingsLoading) return null;
 
   const weddingDate = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`);
   const formattedDate = weddingDate.toLocaleDateString("pt-BR", {

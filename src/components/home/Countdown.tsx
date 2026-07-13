@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function Countdown() {
-  const { settings } = useSiteSettings();
-  const weddingDate = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`);
+  const { settings, loading: settingsLoading } = useSiteSettings();
+  const weddingDateRef = useRef(new Date(`${settings.weddingDate}T${settings.weddingTime}:00`));
+
+  useEffect(() => {
+    if (!settingsLoading) {
+      weddingDateRef.current = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`);
+    }
+  }, [settings, settingsLoading]);
 
   function diff() {
-    const ms = Math.max(0, weddingDate.getTime() - Date.now());
+    const ms = Math.max(0, weddingDateRef.current.getTime() - Date.now());
     const d = Math.floor(ms / 86400000);
     const h = Math.floor((ms % 86400000) / 3600000);
     const m = Math.floor((ms % 3600000) / 60000);
@@ -18,7 +24,9 @@ export function Countdown() {
   useEffect(() => {
     const i = setInterval(() => setT(diff()), 1000);
     return () => clearInterval(i);
-  }, []);
+  }, [settingsLoading]);
+
+  if (settingsLoading) return null;
 
   const items = [
     { v: t.d, label: "Dias" },
@@ -40,12 +48,12 @@ export function Countdown() {
           {items.map((i) => (
             <div
               key={i.label}
-              className="bg-card rounded-2xl p-4 sm:p-6 shadow-[var(--shadow-card)] border border-border/60"
+              className="bg-card rounded-2xl p-3 sm:p-6 shadow-[var(--shadow-card)] border border-border/60 min-w-0"
             >
-              <div className="text-3xl sm:text-5xl font-semibold tabular-nums text-foreground">
+              <div className="text-2xl sm:text-5xl font-semibold tabular-nums text-foreground">
                 {i.v.toString().padStart(2, "0")}
               </div>
-              <div className="text-xs sm:text-sm uppercase tracking-widest text-muted-foreground mt-2">
+              <div className="text-[11px] sm:text-sm uppercase tracking-wide sm:tracking-widest text-muted-foreground mt-1 sm:mt-2 truncate">
                 {i.label}
               </div>
             </div>

@@ -33,6 +33,7 @@ export interface Gift {
   title: string;
   marca?: string;
   image: string;
+  imageDesktop?: string;
   total: number;
   raised: number;
   hidden: boolean;
@@ -116,6 +117,7 @@ export const getGifts = async (): Promise<Gift[]> => {
       title: data.title,
       marca: data.marca || "",
       image: data.image,
+      imageDesktop: data.imageDesktop || "",
       total: Number(data.total) || 0,
       raised: Number(data.raised) || 0,
       hidden: data.hidden ?? false,
@@ -141,6 +143,7 @@ export const addGift = async (gift: Omit<Gift, "id">): Promise<string> => {
     title: gift.title,
     marca: gift.marca || "",
     image: gift.image,
+    imageDesktop: gift.imageDesktop || "",
     total: gift.total,
     raised: gift.raised || 0,
     hidden: gift.hidden ?? false,
@@ -198,6 +201,7 @@ export const getVisibleGifts = async (): Promise<Gift[]> => {
         title: data.title,
         marca: data.marca || "",
         image: data.image,
+        imageDesktop: data.imageDesktop || "",
         total: Number(data.total) || 0,
         raised: Number(data.raised) || 0,
         hidden: data.hidden ?? false,

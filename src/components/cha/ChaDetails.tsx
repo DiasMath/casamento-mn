@@ -3,7 +3,9 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Flower, Branch } from "@/components/decor/Flower";
 
 export function ChaDetails() {
-  const { settings } = useSiteSettings();
+  const { settings, loading: settingsLoading } = useSiteSettings();
+
+  if (settingsLoading) return null;
 
   const chaDate = new Date(`${settings.chaDate}T${settings.chaTime}:00`);
 

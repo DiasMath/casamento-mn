@@ -58,11 +58,16 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
 
         {/* Imagem mais baixa (aspect-video) */}
         <div className="aspect-video overflow-hidden bg-secondary relative">
-          <img
-            src={localGift.image}
-            alt={localGift.title}
-            className={`w-full h-full object-contain ${reserved ? "opacity-60" : ""}`}
-          />
+          <picture>
+            {localGift.imageDesktop && (
+              <source media="(min-width: 640px)" srcSet={localGift.imageDesktop} />
+            )}
+            <img
+              src={localGift.image}
+              alt={localGift.title}
+              className={`w-full h-full object-cover ${reserved ? "opacity-60" : ""}`}
+            />
+          </picture>
           {reserved && (
             <div className="absolute inset-0 flex items-center justify-center bg-primary/10 backdrop-blur-[1px]">
               <div className="bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg">

@@ -38,6 +38,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
   const [title, setTitle] = useState("");
   const [marca, setMarca] = useState("");
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [imageDesktopBlob, setImageDesktopBlob] = useState<Blob | null>(null);
   const [total, setTotal] = useState("");
   const [category, setCategory] = useState<GiftCategory>("outros");
   const [priority, setPriority] = useState<GiftPriority>("media");
@@ -51,9 +52,13 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
     setLoading(true);
     try {
       let imageUrl = "";
+      let imageDesktopUrl = "";
 
       if (imageBlob) {
         imageUrl = await uploadToCloudinary(imageBlob);
+      }
+      if (imageDesktopBlob) {
+        imageDesktopUrl = await uploadToCloudinary(imageDesktopBlob);
       }
 
       const { validTitle, totalNum, validMarca } = validateGiftData(
@@ -68,6 +73,7 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
         title: validTitle,
         marca: validMarca,
         image: imageUrl,
+        imageDesktop: imageDesktopUrl,
         total: chaMode || noValue ? 1 : totalNum,
         raised: 0,
         hidden: false,
@@ -137,10 +143,18 @@ export function AddGiftFAB({ onGiftAdded }: AddGiftFABProps) {
             />
           </div>
           <div>
-            <Label>Imagem do Presente</Label>
+            <Label>Imagem do Presente (Mobile)</Label>
             <ImageUploader
               onFileReady={setImageBlob}
               hasNewFile={imageBlob !== null}
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <Label>Imagem do Presente (Desktop) <span className="text-muted-foreground text-xs">- Opcional</span></Label>
+            <ImageUploader
+              onFileReady={setImageDesktopBlob}
+              hasNewFile={imageDesktopBlob !== null}
               disabled={loading}
             />
           </div>
