@@ -85,7 +85,7 @@ export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: Add
       const { validTitle, totalNum, validMarca } = validateGiftData(
         title,
         imageUrl,
-        chaMode ? "1" : total,
+        chaMode || noValue ? "1" : total,
         undefined,
         marca,
       );

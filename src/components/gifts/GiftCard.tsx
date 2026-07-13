@@ -426,7 +426,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
         onOpenChange={setEditOpen}
         onGiftUpdated={onUpdate}
       />
-      {isAdmin && (
+      {isAdmin && duplicateGift && (
         <AddGiftFAB
           onGiftAdded={onUpdate}
           duplicateFrom={duplicateGift}
