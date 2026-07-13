@@ -8,6 +8,7 @@ import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useCategories } from "@/hooks/useCategories";
 import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
@@ -26,6 +27,7 @@ interface GiftCardProps {
 const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
   const { isAdmin } = useAuth();
   const { settings } = useSiteSettings();
+  const { allCategories } = useCategories();
   const isChaActive = settings.chaDePanelaEnabled && gift.chaMode;
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -57,8 +59,8 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
     gift.noValue,
   ]);
 
-  const pct = calculatePercentage(localGift.raised, localGift.total);
-  const completed = localGift.raised >= localGift.total;
+  const pct = localGift.noValue ? 0 : calculatePercentage(localGift.raised, localGift.total);
+  const completed = localGift.noValue ? false : localGift.raised >= localGift.total;
 
   const handlePaymentSuccess = useCallback(
     (value: number) => {
@@ -263,11 +265,11 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
             {localGift.category && (
               <Badge variant="secondary" className="text-xs font-normal">
                 {
-                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                  allCategories.find((c) => c.value === localGift.category)
                     ?.icon
                 }{" "}
                 {
-                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                  allCategories.find((c) => c.value === localGift.category)
                     ?.label
                 }
               </Badge>
@@ -361,25 +363,22 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
             </>
           ) : localGift.noValue ? (
             <>
-              {/* Modo sem valor: apenas botão de presentear */}
+              {/* Modo sem valor: valor aberto */}
               <div className="mt-auto">
                 <Button
                   onClick={() => setPayOpen(true)}
-                  disabled={completed}
                   className={`w-full rounded-full transition-transform active:scale-95 ${
                     localGift.priority === "premium"
                       ? "bg-yellow-500 text-yellow-950 hover:bg-yellow-400"
                       : "bg-primary text-primary-foreground hover:opacity-90"
                   }`}
                 >
-                  {completed ? (
-                    <Check className="w-4 h-4 mr-2" />
-                  ) : localGift.priority === "premium" ? (
+                  {localGift.priority === "premium" ? (
                     <Gem className="w-4 h-4 mr-2" />
                   ) : (
                     <Gift className="w-4 h-4 mr-2" />
                   )}
-                  {completed ? "Comprado" : "Presentear"}
+                  Presentear
                 </Button>
               </div>
             </>

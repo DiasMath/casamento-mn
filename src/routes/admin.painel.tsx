@@ -38,6 +38,7 @@ import { PriorityStats } from "@/components/admin/PriorityStats";
 import { SiteImagesDialog } from "@/components/admin/SiteImagesSection";
 import { PaletteDialog } from "@/components/admin/PaletteDialog";
 import { GeneralSettingsDialog } from "@/components/admin/GeneralSettingsDialog";
+import { CategoryDialog } from "@/components/admin/CategoryDialog";
 import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
@@ -202,6 +203,7 @@ export function AdminPainel() {
         <div className="flex gap-2 flex-wrap">
           <GeneralSettingsDialog />
           <PaletteDialog />
+          <CategoryDialog />
           <SiteImagesDialog />
           <Button variant="outline" asChild className="rounded-full gap-2">
             <Link to="/">

@@ -25,8 +25,9 @@ import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { GiftCategory, GiftPriority, Gift } from "@/lib/firestoreService";
 import { validateGiftData } from "@/lib/utils";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useCategories } from "@/hooks/useCategories";
 import { ImageUploader } from "./ImageUploader";
-import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
+import { GIFT_PRIORITIES } from "@/lib/constants";
 
 interface AddGiftFABProps {
   onGiftAdded: () => void;
@@ -36,6 +37,7 @@ interface AddGiftFABProps {
 
 export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: AddGiftFABProps) {
   const { settings } = useSiteSettings();
+  const { allCategories } = useCategories();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [marca, setMarca] = useState("");
@@ -237,7 +239,7 @@ export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: Add
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GIFT_CATEGORIES.map((cat) => (
+                  {allCategories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.icon} {cat.label}
                     </SelectItem>

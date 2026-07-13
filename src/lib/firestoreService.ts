@@ -586,6 +586,7 @@ export interface SiteSettings {
   chaVenueAddress: string;
   chaMapsUrl: string;
   chaDePanelaEnabled: boolean;
+  customCategories?: Array<{ value: string; label: string; icon: string }>;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {

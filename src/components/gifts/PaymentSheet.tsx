@@ -257,7 +257,7 @@ export function PaymentSheet({
                 <p className="text-xs text-muted-foreground">Presentear</p>
                 <p className="text-base font-medium">{gift.title}</p>
               </div>
-              {gift.raised < gift.total && (
+              {gift.raised < gift.total && !gift.noValue && (
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Falta</p>
                   <p className="text-sm font-medium text-primary">
@@ -278,25 +278,27 @@ export function PaymentSheet({
               />
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Checkbox
-                id="preferStore"
-                checked={preferStore}
-                onCheckedChange={(v) => {
-                  if (v === true) {
-                    onOpenChange(false);
-                    setTimeout(() => setReserveOpen(true), 200);
-                  }
-                  setPreferStore(v === true);
-                }}
-              />
-              <Label
-                htmlFor="preferStore"
-                className="text-sm cursor-pointer"
-              >
-                Prefiro comprar na loja
-              </Label>
-            </div>
+            {!gift.noValue && (
+              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+                <Checkbox
+                  id="preferStore"
+                  checked={preferStore}
+                  onCheckedChange={(v) => {
+                    if (v === true) {
+                      onOpenChange(false);
+                      setTimeout(() => setReserveOpen(true), 200);
+                    }
+                    setPreferStore(v === true);
+                  }}
+                />
+                <Label
+                  htmlFor="preferStore"
+                  className="text-sm cursor-pointer"
+                >
+                  Prefiro comprar na loja
+                </Label>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="valor" className="text-sm">
@@ -342,19 +344,13 @@ export function PaymentSheet({
               </TabsContent>
               <TabsContent value="card" className="mt-6">
                 <Button
-                  onClick={handleCardCheckout}
-                  disabled={cardLoading || !amount}
-                  className="w-full h-14 rounded-full bg-primary text-primary-foreground hover:opacity-90 text-lg font-medium"
+                  disabled
+                  className="w-full h-14 rounded-full bg-muted text-muted-foreground text-lg font-medium cursor-not-allowed"
                 >
-                  {cardLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    "Pagar com Cartão"
-                  )}
+                  Em breve!
                 </Button>
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  Você será redirecionado para o Mercado Pago para pagar com
-                  segurança.
+                  Pagamento por cartão estará disponível em breve.
                 </p>
               </TabsContent>
             </Tabs>

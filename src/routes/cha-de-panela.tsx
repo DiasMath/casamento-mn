@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChaLayout } from "@/components/layout/ChaLayout";
 import { ChaHero } from "@/components/cha/ChaHero";
@@ -17,6 +17,7 @@ import { Branch } from "@/components/decor/Flower";
 export function ChaDePanela() {
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const giftSectionRef = useRef<HTMLDivElement>(null);
 
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,11 +29,14 @@ export function ChaDePanela() {
     showCompleted: true,
   });
 
-  const fetchGifts = useCallback(async () => {
+  const fetchGifts = useCallback(async (scrollToTop?: boolean) => {
     try {
       setLoading(true);
       const data = isAdmin ? await getGifts() : await getVisibleGifts();
       setGifts(data);
+      if (scrollToTop && giftSectionRef.current) {
+        giftSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     } catch (error) {
       devLog.error("Erro ao carregar presentes:", error);
     } finally {
@@ -44,6 +48,17 @@ export function ChaDePanela() {
     fetchGifts();
     getColorPalette().then(setPalette).catch(() => {});
   }, [fetchGifts, isAdmin]);
+
+  const handleGiftUpdate = useCallback(() => {
+    fetchGifts(true);
+  }, [fetchGifts]);
+
+  // Scroll to gift section when filters change
+  useEffect(() => {
+    if (giftSectionRef.current) {
+      giftSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [filters]);
 
   // Handle Mercado Pago payment return
   useEffect(() => {
@@ -141,7 +156,7 @@ export function ChaDePanela() {
           {loading ? (
             <div className="flex justify-center py-20">Carregando...</div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6" ref={giftSectionRef}>
               <GiftFilters
                 filters={filters}
                 onFilterChange={setFilters}
@@ -157,7 +172,7 @@ export function ChaDePanela() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                       {filteredGifts.map((g) => (
-                        <GiftCard key={g.id} gift={g} onUpdate={fetchGifts} />
+                        <GiftCard key={g.id} gift={g} onUpdate={handleGiftUpdate} />
                       ))}
                     </div>
                 )}

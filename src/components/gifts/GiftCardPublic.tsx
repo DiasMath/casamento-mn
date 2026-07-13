@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useCategories } from "@/hooks/useCategories";
 import { Gift as GiftType } from "@/lib/firestoreService";
 import { PaymentSheet } from "./PaymentSheet";
 import { ThankYouSheet } from "./ThankYouSheet";
 import { ReserveGiftSheet } from "./ReserveGiftSheet";
 import { useGiftPayment } from "@/hooks/useGiftPayment";
-import { GIFT_CATEGORIES } from "@/lib/constants";
 
 interface GiftCardPublicProps {
   gift: GiftType;
@@ -19,6 +19,7 @@ interface GiftCardPublicProps {
 
 export function GiftCardPublic({ gift }: GiftCardPublicProps) {
   const { settings } = useSiteSettings();
+  const { allCategories } = useCategories();
   const isChaActive = settings.chaDePanelaEnabled && gift.chaMode;
   const {
     localGift,
@@ -33,8 +34,8 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
   const [reserveOpen, setReserveOpen] = useState(false);
   const [reserved, setReserved] = useState(!!localGift.reservedBy);
 
-  const pct = calculatePercentage(localGift.raised, localGift.total);
-  const completed = localGift.raised >= localGift.total;
+  const pct = localGift.noValue ? 0 : calculatePercentage(localGift.raised, localGift.total);
+  const completed = localGift.noValue ? false : localGift.raised >= localGift.total;
 
   const handleReserveSuccess = useCallback(() => {
     setReserved(true);
@@ -90,11 +91,11 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
             {localGift.category && (
               <span className="inline-flex items-center text-xs text-muted-foreground mt-1">
                 {
-                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                  allCategories.find((c) => c.value === localGift.category)
                     ?.icon
                 }{" "}
                 {
-                  GIFT_CATEGORIES.find((c) => c.value === localGift.category)
+                  allCategories.find((c) => c.value === localGift.category)
                     ?.label
                 }
               </span>
@@ -149,11 +150,10 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
             </>
           ) : localGift.noValue ? (
             <>
-              {/* Modo sem valor: apenas botão de presentear */}
+              {/* Modo sem valor: valor aberto */}
               <div className="mt-auto">
                 <Button
                   onClick={() => setPayOpen(true)}
-                  disabled={completed}
                   size="sm"
                   className={`w-full rounded-full h-11 text-sm transition-transform active:scale-95 ${
                     localGift.priority === "premium"
@@ -161,14 +161,12 @@ export function GiftCardPublic({ gift }: GiftCardPublicProps) {
                       : "bg-primary text-primary-foreground hover:opacity-90"
                   }`}
                 >
-                  {completed ? (
-                    <Check className="w-4 h-4 mr-1.5" />
-                  ) : localGift.priority === "premium" ? (
+                  {localGift.priority === "premium" ? (
                     <Gem className="w-4 h-4 mr-1.5" />
                   ) : (
                     <Gift className="w-4 h-4 mr-1.5" />
                   )}
-                  {completed ? "Comprado" : "Presentear"}
+                  Presentear
                 </Button>
               </div>
             </>

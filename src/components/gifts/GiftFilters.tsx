@@ -8,7 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
+import { useCategories } from "@/hooks/useCategories";
+import { GIFT_PRIORITIES } from "@/lib/constants";
 import type { GiftCategory, GiftPriority } from "@/lib/firestoreService";
 
 export interface GiftFiltersState {
@@ -29,6 +30,7 @@ export function GiftFilters({
   onFilterChange,
   isAdmin,
 }: GiftFiltersProps) {
+  const { allCategories } = useCategories();
   const hasActiveFilters =
     filters.search !== "" ||
     filters.category !== "todas" ||
@@ -102,7 +104,7 @@ export function GiftFilters({
             <SelectItem value="todas">
               <span className="font-medium">Todas as categorias</span>
             </SelectItem>
-            {GIFT_CATEGORIES.map((cat) => (
+            {allCategories.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.icon} {cat.label}
               </SelectItem>
