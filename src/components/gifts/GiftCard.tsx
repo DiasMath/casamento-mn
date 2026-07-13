@@ -8,12 +8,13 @@ import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { Gift as GiftType, toggleGiftVisibility, cancelReservation, addGift } from "@/lib/firestoreService";
+import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
 import { ThankYouSheet } from "./ThankYouSheet";
 import { ReserveGiftSheet } from "./ReserveGiftSheet";
+import { AddGiftFAB } from "./AddGiftFAB";
 import { toast } from "sonner";
 import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
 
@@ -143,45 +144,9 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
     onUpdate();
   }, [onUpdate]);
 
-  const handleDuplicate = useCallback(async () => {
-    try {
-      const newId = await addGift({
-        title: `${localGift.title} (Cópia)`,
-        marca: localGift.marca,
-        image: localGift.image,
-        imageDesktop: localGift.imageDesktop,
-        total: localGift.total,
-        raised: 0,
-        hidden: localGift.hidden,
-        category: localGift.category,
-        priority: localGift.priority,
-        chaMode: localGift.chaMode,
-        buyLink: localGift.buyLink,
-        noValue: localGift.noValue,
-      });
-      const tempGift: GiftType = {
-        id: newId,
-        title: `${localGift.title} (Cópia)`,
-        marca: localGift.marca,
-        image: localGift.image,
-        imageDesktop: localGift.imageDesktop,
-        total: localGift.total,
-        raised: 0,
-        hidden: localGift.hidden,
-        category: localGift.category,
-        priority: localGift.priority,
-        chaMode: localGift.chaMode,
-        buyLink: localGift.buyLink,
-        noValue: localGift.noValue,
-      };
-      setDuplicateGift(tempGift);
-      toast.success("Presente duplicado! Edite as informações.");
-      onUpdate();
-    } catch (error) {
-      devLog.error("Erro ao duplicar presente:", error);
-      toast.error("Erro ao duplicar presente");
-    }
-  }, [localGift, onUpdate]);
+  const handleDuplicate = useCallback(() => {
+    setDuplicateGift(localGift);
+  }, [localGift]);
 
   return (
     <>
@@ -456,14 +421,18 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
 
       {/* Modais de CRUD e Pagamento */}
       <EditGiftDialog
-        gift={duplicateGift || localGift}
-        open={editOpen || !!duplicateGift}
-        onOpenChange={(v) => {
-          setEditOpen(v);
-          if (!v) setDuplicateGift(null);
-        }}
+        gift={localGift}
+        open={editOpen}
+        onOpenChange={setEditOpen}
         onGiftUpdated={onUpdate}
       />
+      {isAdmin && (
+        <AddGiftFAB
+          onGiftAdded={onUpdate}
+          duplicateFrom={duplicateGift}
+          onDuplicateClose={() => setDuplicateGift(null)}
+        />
+      )}
       <DeleteGiftDialog
         giftId={localGift.id}
         giftTitle={localGift.title}
