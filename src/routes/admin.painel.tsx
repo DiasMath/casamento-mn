@@ -29,7 +29,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  GIFT_CATEGORIES,
   GIFT_PRIORITIES,
 } from "@/lib/constants";
 import { ContributionChart } from "@/components/admin/ContributionChart";
@@ -41,10 +40,12 @@ import { GeneralSettingsDialog } from "@/components/admin/GeneralSettingsDialog"
 import { CategoryDialog } from "@/components/admin/CategoryDialog";
 import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useCategories } from "@/hooks/useCategories";
 
 export function AdminPainel() {
   const { isAdmin, loading, logout } = useAuth();
   const { settings } = useSiteSettings();
+  const { allCategories } = useCategories();
   const navigate = useNavigate();
 
   const [loggingOut, setLoggingOut] = useState(false);
@@ -109,7 +110,7 @@ export function AdminPainel() {
 
   // Cálculos de Presentes (bruto)
   const totalRaised = gifts.reduce((s, g) => s + g.raised, 0);
-  const totalGoal = gifts.reduce((s, g) => s + g.total, 0);
+  const totalGoal = gifts.filter((g) => !g.noValue).reduce((s, g) => s + g.total, 0);
   const remainingValue = Math.max(0, totalGoal - totalRaised);
   const overallPct =
     totalGoal > 0
@@ -123,9 +124,9 @@ export function AdminPainel() {
   }, 0);
   const remainingNet = Math.max(0, totalGoal - Math.round(totalNet));
 
-  const guaranteedGifts = gifts.filter((g) => g.raised >= g.total).length;
+  const guaranteedGifts = gifts.filter((g) => !g.noValue && g.raised >= g.total).length;
   const giftsInProgress = gifts.filter(
-    (g) => g.raised > 0 && g.raised < g.total,
+    (g) => !g.noValue && g.raised > 0 && g.raised < g.total,
   ).length;
 
   // Métricas de reservas (cha de panela)
@@ -135,6 +136,10 @@ export function AdminPainel() {
   // Cálculo de dias para o casamento
   const diffTime = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`).getTime() - new Date().getTime();
   const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Cálculo de dias para o chá de panela
+  const chaDiffTime = new Date(`${settings.chaDate}T${settings.chaTime}:00`).getTime() - new Date().getTime();
+  const daysUntilCha = Math.ceil(chaDiffTime / (1000 * 60 * 60 * 24));
 
   // Métricas de RSVP (apenas confirmados)
   const attendingRsvps = rsvps.filter((r) => r.attending !== false);
@@ -169,6 +174,7 @@ export function AdminPainel() {
       label: "Dias para o Casamento",
       value: `${daysUntil} dias`,
       icon: Hourglass,
+      subtext: settings.chaDePanelaEnabled ? `Chá de Panela: ${daysUntilCha} dias` : undefined,
     },
     {
       label: "Total de Pessoas",
@@ -307,8 +313,8 @@ export function AdminPainel() {
               </thead>
               <tbody className="divide-y">
                 {gifts.map((g) => {
-                  const pct = calculatePercentage(g.raised, g.total);
-                  const cat = GIFT_CATEGORIES.find(
+                  const pct = g.noValue ? 0 : calculatePercentage(g.raised, g.total);
+                  const cat = allCategories.find(
                     (c) => c.value === (g.category ?? "outros"),
                   );
                   const pri = GIFT_PRIORITIES.find(
@@ -346,27 +352,31 @@ export function AdminPainel() {
                         </span>
                       </td>
                       <td className="px-6 py-4 min-w-[150px]">
-                        <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
-                          <div
-                            className={`absolute inset-y-0 left-0 rounded-full transition-all ${
-                              pct >= 100
-                                ? "bg-green-200"
-                                : pct >= 50
-                                  ? "bg-yellow-200"
-                                  : "bg-red-200"
-                            }`}
-                            style={{ width: `${pct}%` }}
-                          />
-                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
-                            {pct}%
-                          </span>
-                        </div>
+                        {g.noValue ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
+                            <div
+                              className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                                pct >= 100
+                                  ? "bg-green-200"
+                                  : pct >= 50
+                                    ? "bg-yellow-200"
+                                    : "bg-red-200"
+                              }`}
+                              style={{ width: `${pct}%` }}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
+                              {pct}%
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center font-medium tabular-nums">
                         {brl(g.raised)}
                       </td>
                       <td className="px-6 py-4 text-center tabular-nums text-muted-foreground">
-                        {brl(g.total)}
+                        {g.noValue ? "—" : brl(g.total)}
                       </td>
                     </tr>
                   );
@@ -377,8 +387,8 @@ export function AdminPainel() {
           {/* Mobile: cards */}
           <div className="md:hidden divide-y">
             {gifts.map((g) => {
-              const pct = calculatePercentage(g.raised, g.total);
-              const cat = GIFT_CATEGORIES.find(
+              const pct = g.noValue ? 0 : calculatePercentage(g.raised, g.total);
+              const cat = allCategories.find(
                 (c) => c.value === (g.category ?? "outros"),
               );
               const pri = GIFT_PRIORITIES.find(
@@ -410,31 +420,35 @@ export function AdminPainel() {
                       {pri?.icon} {pri?.label}
                     </span>
                   </div>
-                  <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className={`absolute inset-y-0 left-0 rounded-full transition-all ${
-                        pct >= 100
-                          ? "bg-green-200"
-                          : pct >= 50
-                            ? "bg-yellow-200"
-                            : "bg-red-200"
-                      }`}
-                      style={{ width: `${pct}%` }}
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
-                      {pct}%
-                    </span>
-                  </div>
+                  {!g.noValue && (
+                    <div className="relative h-5 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                          pct >= 100
+                            ? "bg-green-200"
+                            : pct >= 50
+                              ? "bg-yellow-200"
+                              : "bg-red-200"
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-foreground mix-blend-difference">
+                        {pct}%
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Arrecadado:</span>
                     <span className="font-medium">{brl(g.raised)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="text-muted-foreground">
-                      {brl(g.total)}
-                    </span>
-                  </div>
+                  {!g.noValue && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Total:</span>
+                      <span className="text-muted-foreground">
+                        {brl(g.total)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -450,13 +464,13 @@ export function AdminPainel() {
           </div>
           {/* Desktop: tabela | Mobile: cards */}
           <div className="hidden md:block max-h-[400px] overflow-y-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-center border-collapse">
               <thead className="sticky top-0 bg-card z-10 shadow-sm">
                 <tr className="bg-muted/50 text-muted-foreground text-[10px] uppercase">
-                  <th className="px-6 py-3 font-bold border-b border-border">
+                  <th className="px-6 py-3 font-bold text-center border-b border-border">
                     Data
                   </th>
-                  <th className="px-6 py-3 font-bold border-b border-border">
+                  <th className="px-6 py-3 font-bold text-center border-b border-border">
                     Nome
                   </th>
                   <th className="px-6 py-3 font-bold text-center border-b border-border">
@@ -476,10 +490,10 @@ export function AdminPainel() {
                     key={r.id}
                     className={`hover:bg-muted/20 transition-colors ${r.attending === false ? "opacity-60" : ""}`}
                   >
-                    <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="px-6 py-4 text-center text-xs text-muted-foreground whitespace-nowrap">
                       {formatDate(r.confirmedAt)}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-center">
                       <p className="text-sm font-medium">{r.name}</p>
                       {r.email && (
                         <p className="text-xs text-muted-foreground">

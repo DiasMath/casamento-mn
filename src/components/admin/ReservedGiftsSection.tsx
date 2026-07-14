@@ -93,17 +93,17 @@ export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionPr
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-              <th className="text-left px-6 py-3 font-bold">Presente</th>
-              <th className="text-left px-6 py-3 font-bold">Reservado por</th>
-              <th className="text-left px-6 py-3 font-bold">Data da Reserva</th>
+              <th className="text-center px-6 py-3 font-bold">Presente</th>
+              <th className="text-center px-6 py-3 font-bold">Reservado por</th>
+              <th className="text-center px-6 py-3 font-bold">Data da Reserva</th>
               <th className="text-center px-6 py-3 font-bold">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
             {reservedGifts.map((g) => (
               <tr key={g.id} className="hover:bg-muted/20 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
+                <td className="px-6 py-4 text-center">
+                  <div className="flex items-center justify-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0">
                       <img src={g.image} alt={g.title} className="w-full h-full object-contain" />
                     </div>
@@ -115,18 +115,18 @@ export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionPr
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   <Badge variant="secondary" className="text-xs">
                     {g.reservedBy}
                   </Badge>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <td className="px-6 py-4 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3" />
                     {formatDate(g.reservedAt)}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Button
                       size="sm"

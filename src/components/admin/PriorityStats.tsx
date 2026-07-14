@@ -72,9 +72,9 @@ export function PriorityStats({ gifts }: PriorityStatsProps) {
       const entry = map.get(g.priority ?? "media");
       if (!entry) return;
       entry.count++;
-      entry.total += g.total;
+      entry.total += g.noValue ? 0 : g.total;
       entry.raised += g.raised;
-      if (g.raised >= g.total) entry.completed++;
+      if (!g.noValue && g.raised >= g.total) entry.completed++;
     });
 
     return Array.from(map.values())
@@ -134,12 +134,14 @@ export function PriorityStats({ gifts }: PriorityStatsProps) {
                   {brl(d.raised)}
                 </span>
               </span>
-              <span className="text-muted-foreground">
-                Restante:{" "}
-                <span className="font-bold text-foreground">
-                  {brl(d.remaining)}
+              {d.remaining > 0 && (
+                <span className="text-muted-foreground">
+                  Restante:{" "}
+                  <span className="font-bold text-foreground">
+                    {brl(d.remaining)}
+                  </span>
                 </span>
-              </span>
+              )}
             </div>
           </div>
         ))}

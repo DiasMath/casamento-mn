@@ -42,7 +42,7 @@ export function ChaCountdown() {
           contagem regressiva
         </p>
         <h2 className="text-2xl sm:text-3xl font-semibold mt-2 text-foreground">
-          Faltam pouquinho para o nosso chá!
+          Falta pouquinho para o nosso chá!
         </h2>
         <div className="grid grid-cols-4 gap-2 sm:gap-4 mt-10">
           {items.map((i) => (

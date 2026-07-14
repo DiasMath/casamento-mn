@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Gift, GiftCategory, GiftPriority } from "@/lib/firestoreService";
-import { GIFT_CATEGORIES, GIFT_PRIORITIES } from "@/lib/constants";
+import { GIFT_PRIORITIES } from "@/lib/constants";
+import { useCategories } from "@/hooks/useCategories";
 import { brl } from "@/lib/format";
 
 interface CategoryStatsProps {
@@ -8,7 +9,7 @@ interface CategoryStatsProps {
 }
 
 interface CategoryData {
-  category: GiftCategory;
+  category: string;
   label: string;
   icon: string;
   count: number;
@@ -58,14 +59,13 @@ function ProgressBar({ pct }: { pct: number }) {
 }
 
 export function CategoryStats({ gifts }: CategoryStatsProps) {
-  const [selectedCategory, setSelectedCategory] = useState<GiftCategory | null>(
-    null,
-  );
+  const { allCategories } = useCategories();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const data = useMemo<CategoryData[]>(() => {
-    const map = new Map<GiftCategory, CategoryData>();
+    const map = new Map<string, CategoryData>();
 
-    GIFT_CATEGORIES.forEach((cat) => {
+    allCategories.forEach((cat) => {
       map.set(cat.value, {
         category: cat.value,
         label: cat.label,
@@ -83,9 +83,9 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
       const entry = map.get(g.category ?? "outros");
       if (!entry) return;
       entry.count++;
-      entry.total += g.total;
+      entry.total += g.noValue ? 0 : g.total;
       entry.raised += g.raised;
-      if (g.raised >= g.total) entry.completed++;
+      if (!g.noValue && g.raised >= g.total) entry.completed++;
     });
 
     return Array.from(map.values())
@@ -99,7 +99,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
       }))
       .filter((entry) => entry.count > 0)
       .sort((a, b) => b.raised - a.raised);
-  }, [gifts]);
+  }, [gifts, allCategories]);
 
   const filteredGifts = useMemo(
     () =>
@@ -149,11 +149,11 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-                  <th className="text-left pb-2 font-bold">Categoria</th>
+                  <th className="text-center pb-2 font-bold">Categoria</th>
                   <th className="text-center pb-2 font-bold">Qtd</th>
-                  <th className="text-right pb-2 font-bold">Arrecadado</th>
-                  <th className="text-right pb-2 font-bold">Meta</th>
-                  <th className="text-right pb-2 font-bold">Restante</th>
+                  <th className="text-center pb-2 font-bold">Arrecadado</th>
+                  <th className="text-center pb-2 font-bold">Meta</th>
+                  <th className="text-center pb-2 font-bold">Restante</th>
                   <th className="text-center pb-2 font-bold w-32">Progresso</th>
                 </tr>
               </thead>
@@ -164,22 +164,22 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                     onClick={() => setSelectedCategory(d.category)}
                     className="hover:bg-muted/20 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 font-medium">
+                    <td className="py-3 text-center font-medium">
                       {d.icon} {d.label}
                     </td>
                     <td className="py-3 text-center text-muted-foreground">
                       {d.count}
                     </td>
-                    <td className="py-3 text-right font-medium tabular-nums">
+                    <td className="py-3 text-center font-medium tabular-nums">
                       {brl(d.raised)}
                     </td>
-                    <td className="py-3 text-right tabular-nums text-muted-foreground">
-                      {brl(d.total)}
+                    <td className="py-3 text-center tabular-nums text-muted-foreground">
+                      {d.total > 0 ? brl(d.total) : "—"}
                     </td>
-                    <td className="py-3 text-right tabular-nums text-muted-foreground">
-                      {brl(d.remaining)}
+                    <td className="py-3 text-center tabular-nums text-muted-foreground">
+                      {d.total > 0 ? brl(d.remaining) : "—"}
                     </td>
-                    <td className="py-3 px-2">
+                    <td className="py-3 text-center px-2">
                       <ProgressBar pct={d.pct} />
                     </td>
                   </tr>
@@ -212,12 +212,14 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                       {brl(d.raised)}
                     </span>
                   </span>
-                  <span>
-                    Restante:{" "}
-                    <span className="font-bold text-foreground">
-                      {brl(d.remaining)}
+                  {d.total > 0 && (
+                    <span>
+                      Restante:{" "}
+                      <span className="font-bold text-foreground">
+                        {brl(d.remaining)}
+                      </span>
                     </span>
-                  </span>
+                  )}
                 </div>
               </button>
             ))}
@@ -276,6 +278,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                   .sort((a, b) => a.raised - b.raised || a.total - b.total)
                   .map((g) => {
                     const pct =
+                      g.noValue ? 0 :
                       g.total > 0
                         ? Math.min(100, Math.round((g.raised / g.total) * 100))
                         : 0;
@@ -297,9 +300,9 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                           {brl(g.raised)}
                         </td>
                         <td className="py-3 text-center tabular-nums text-muted-foreground">
-                          {brl(g.total)}
+                          {g.noValue ? "—" : brl(g.total)}
                         </td>
-                        <td className="py-3 px-2">
+                        <td className="py-3 text-center px-2">
                           <ProgressBar pct={pct} />
                         </td>
                       </tr>
@@ -315,6 +318,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
               .sort((a, b) => a.raised - b.raised || a.total - b.total)
               .map((g) => {
                 const pct =
+                  g.noValue ? 0 :
                   g.total > 0
                     ? Math.min(100, Math.round((g.raised / g.total) * 100))
                     : 0;
@@ -334,7 +338,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                       </div>
                       <PriorityBadge priority={g.priority ?? "media"} />
                     </div>
-                    <ProgressBar pct={pct} />
+                    {!g.noValue && <ProgressBar pct={pct} />}
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>
                         Arrecadado:{" "}
@@ -342,12 +346,14 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
                           {brl(g.raised)}
                         </span>
                       </span>
-                      <span>
-                        Restante:{" "}
-                        <span className="font-bold text-foreground">
-                          {brl(Math.max(0, g.total - g.raised))}
+                      {!g.noValue && (
+                        <span>
+                          Restante:{" "}
+                          <span className="font-bold text-foreground">
+                            {brl(Math.max(0, g.total - g.raised))}
+                          </span>
                         </span>
-                      </span>
+                      )}
                     </div>
                   </div>
                 );
