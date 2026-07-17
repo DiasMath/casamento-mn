@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,13 @@ export function ThankYouSheet({
       setProgress(100);
       return;
     }
+
+    confetti({
+      particleCount: 150,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: ["#f59e0b", "#ec4899", "#8b5cf6", "#10b981", "#3b82f6"],
+    });
 
     const interval = setInterval(() => {
       setProgress((prev) => {
