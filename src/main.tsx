@@ -13,6 +13,7 @@ import { ViewModeProvider } from "@/contexts/ViewModeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useTrackPageview } from "@/hooks/useTrackPageview";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Index = lazy(() => import("./routes/index").then((m) => ({ default: m.Index })));
@@ -32,6 +33,7 @@ function LoadingSpinner() {
 }
 
 function AppLayout() {
+  useTrackPageview();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

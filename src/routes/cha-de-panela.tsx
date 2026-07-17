@@ -123,10 +123,63 @@ export function ChaDePanela() {
             <h2 className="text-2xl sm:text-3xl font-semibold mt-2">
               Presentes
             </h2>
-            <p className="mt-3 text-foreground/70 max-w-xl mx-auto">
-              Sua presença é o maior presente, mas se quiser nos ajudar a montar
-              nosso lar, ficaremos muito felizes!
-            </p>
+            <div className="mt-8 px-6 sm:px-10 py-10 bg-card border-2 border-primary rounded-[2rem] max-w-2xl mx-auto shadow-[0_0_30px_rgba(0,0,0,0.08)] relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-5 py-2 bg-primary/15 rounded-full mb-5">
+                  <span className="text-base">✨</span>
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Como funciona</span>
+                </div>
+                <p className="font-script text-4xl sm:text-5xl text-primary mb-3">Como Presentear</p>
+                <div className="w-20 h-1 bg-primary/40 mx-auto rounded-full mb-5" />
+                <p className="text-base text-foreground/80 max-w-md mx-auto leading-relaxed font-medium">
+                  Sua presença é o maior presente! Mas se quiser nos ajudar, é simples:
+                </p>
+              </div>
+              <div className="relative space-y-6 max-w-md mx-auto">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">🎁</span>
+                    </div>
+                    <p className="text-lg font-semibold">Presentes</p>
+                  </div>
+                  <p className="text-base text-foreground/80 leading-relaxed font-medium">Escolha um item e contribua com o valor total ou parcial.</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">✋</span>
+                    </div>
+                    <p className="text-lg font-semibold">Reservar</p>
+                  </div>
+                  <p className="text-base text-foreground/80 leading-relaxed font-medium">Para presentes físicos, reserve antes para ninguém comprar o mesmo.</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">🎲</span>
+                    </div>
+                    <p className="text-lg font-semibold">Brincadeiras</p>
+                  </div>
+                  <p className="text-base text-foreground/80 leading-relaxed font-medium">Quer ajudar ainda mais? Confira a categoria especial!</p>
+                </div>
+
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xl">🔗</span>
+                    </div>
+                    <p className="text-lg font-semibold">Link de compra</p>
+                  </div>
+                  <p className="text-base text-foreground/80 leading-relaxed font-medium">Alguns itens têm link direto para a loja. Reserve antes de comprar!</p>
+                </div>
+              </div>
+            </div>
             <div className="mt-12 px-6 sm:px-10 py-10 sm:py-12 bg-card border-2 border-primary rounded-[2rem] max-w-2xl mx-auto shadow-[0_0_30px_rgba(0,0,0,0.08)] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none" />

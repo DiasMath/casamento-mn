@@ -632,3 +632,60 @@ export const updateSiteSettings = async (
   const { setDoc } = await import("firebase/firestore");
   await setDoc(docRef, settings, { merge: true });
 };
+
+// ── Analytics ──
+
+export interface AnalyticsDay {
+  date: string;
+  views: number;
+}
+
+export interface AnalyticsStats {
+  totalViews: number;
+  daily: AnalyticsDay[];
+}
+
+export const trackPageview = async (page: string): Promise<void> => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const docId = `${today}-${page}`;
+    const analyticsCol = collection(getDb(), "analytics");
+
+    const { setDoc: upsert } = await import("firebase/firestore");
+    await upsert(doc(analyticsCol, docId), {
+      page,
+      date: today,
+      views: increment(1),
+      lastUpdated: serverTimestamp(),
+    }, { merge: true });
+  } catch (error) {
+    devLog.error("Erro ao registrar pageview:", error);
+  }
+};
+
+export const getAnalyticsStats = async (): Promise<AnalyticsStats> => {
+  try {
+    const analyticsCol = collection(getDb(), "analytics");
+    const snap = await getDocs(analyticsCol);
+
+    const daily: Record<string, number> = {};
+    let totalViews = 0;
+
+    snap.docs.forEach((d) => {
+      const data = d.data();
+      const views = Number(data.views) || 0;
+      const date = data.date as string;
+      totalViews += views;
+      daily[date] = (daily[date] || 0) + views;
+    });
+
+    const dailyArray: AnalyticsDay[] = Object.entries(daily)
+      .map(([date, views]) => ({ date, views }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return { totalViews, daily: dailyArray };
+  } catch (error) {
+    devLog.error("Erro ao buscar analytics:", error);
+    return { totalViews: 0, daily: [] };
+  }
+};

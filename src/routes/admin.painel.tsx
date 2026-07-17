@@ -19,6 +19,7 @@ import {
   ArrowUp,
   ArrowDown,
   X,
+  Eye,
 } from "lucide-react";
 import {
   getGifts,
@@ -28,6 +29,8 @@ import {
   RSVPType,
   getContributions,
   Contribution,
+  getAnalyticsStats,
+  AnalyticsStats,
 } from "../lib/firestoreService";
 import { brl } from "@/lib/format";
 import { calculatePercentage } from "@/lib/utils";
@@ -54,6 +57,7 @@ import { GeneralSettingsDialog } from "@/components/admin/GeneralSettingsDialog"
 import { CategoryDialog } from "@/components/admin/CategoryDialog";
 import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
 import { AddRSVPDialog } from "@/components/admin/AddRSVPDialog";
+import { VisitsChart } from "@/components/admin/VisitsChart";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useCategories } from "@/hooks/useCategories";
 
@@ -74,19 +78,22 @@ export function AdminPainel() {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsStats>({ totalViews: 0, daily: [] });
   const [loadingData, setLoadingData] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       setLoadingData(true);
-      const [giftList, rsvpList, contribList] = await Promise.all([
+      const [giftList, rsvpList, contribList, analyticsData] = await Promise.all([
         getGifts(),
         getRSVPs(),
         getContributions(),
+        getAnalyticsStats(),
       ]);
       setGifts(giftList);
       setRsvps(rsvpList);
       setContributions(contribList);
+      setAnalytics(analyticsData);
     } catch (error) {
       devLog.error("Erro ao carregar dados:", error);
     } finally {
@@ -238,6 +245,11 @@ export function AdminPainel() {
       icon: CheckCircle,
       subtext: `${declinedRsvps.length} recusaram`,
     },
+    {
+      label: "Total de Acessos",
+      value: analytics.totalViews.toString(),
+      icon: Eye,
+    },
     ...(settings.chaDePanelaEnabled
       ? [
           {
@@ -315,6 +327,7 @@ export function AdminPainel() {
       {/* Dashboard de Contribuições e Indicadores */}
       <div className="space-y-6">
         <ContributionChart contributions={contributions} />
+        <VisitsChart daily={analytics.daily} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CategoryStats gifts={gifts} />
           <PriorityStats gifts={gifts} />

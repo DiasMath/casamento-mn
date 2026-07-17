@@ -144,7 +144,6 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
       reservedBy: "Reservado",
       reservedAt: new Date() as any,
     }));
-    setReserveOpen(false);
     onUpdate();
   }, [onUpdate]);
 
@@ -169,6 +168,12 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
           <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
             <Lock className="w-3 h-3" />
             Reservado
+          </div>
+        )}
+        {completed && !localGift.hidden && (
+          <div className="absolute top-2 left-2 z-10 bg-green-600 text-white text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+            <Check className="w-3 h-3" />
+            Concluído
           </div>
         )}
 
@@ -241,13 +246,20 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
             <img
               src={localGift.image}
               alt={localGift.title}
-              className={`w-full h-full object-cover ${localGift.reservedBy ? "opacity-60" : ""}`}
+              className={`w-full h-full object-cover ${localGift.reservedBy || completed ? "opacity-60" : ""}`}
             />
           </picture>
           {localGift.reservedBy && (
             <div className="absolute inset-0 flex items-center justify-center bg-primary/10 backdrop-blur-[1px]">
               <div className="bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg">
                 <Lock className="w-6 h-6" />
+              </div>
+            </div>
+          )}
+          {completed && !localGift.reservedBy && (
+            <div className="absolute inset-0 flex items-center justify-center bg-green-500/10 backdrop-blur-[1px]">
+              <div className="bg-green-600/90 text-white rounded-full p-3 shadow-lg">
+                <Check className="w-6 h-6" />
               </div>
             </div>
           )}

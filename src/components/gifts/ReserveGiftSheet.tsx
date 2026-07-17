@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import confetti from "canvas-confetti";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Heart, Gift } from "lucide-react";
-import { toast } from "sonner";
 import { reserveGift } from "@/lib/firestoreService";
 import type { Gift as GiftType } from "@/lib/firestoreService";
 
@@ -22,6 +22,8 @@ interface ReserveGiftSheetProps {
   onReserveSuccess?: () => void;
   mode?: "cha" | "generic";
 }
+
+const DURATION = 30;
 
 export function ReserveGiftSheet({
   gift,
@@ -34,8 +36,46 @@ export function ReserveGiftSheet({
   const [commitChecked, setCommitChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reserved, setReserved] = useState(false);
+  const [progress, setProgress] = useState(100);
 
   const isValid = name.trim().length >= 2 && commitChecked;
+
+  useEffect(() => {
+    if (reserved) {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#f59e0b", "#ec4899", "#8b5cf6", "#10b981", "#3b82f6"],
+      });
+    }
+  }, [reserved]);
+
+  useEffect(() => {
+    if (!reserved) {
+      setProgress(100);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev <= 0) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 100 / (DURATION * 10);
+      });
+    }, 100);
+
+    const timer = setTimeout(() => {
+      handleClose();
+    }, DURATION * 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, [reserved]);
 
   const handleReserve = useCallback(async () => {
     if (!isValid || loading) return;
@@ -46,12 +86,11 @@ export function ReserveGiftSheet({
       if (result.success) {
         setReserved(true);
         onReserveSuccess?.();
-        toast.success("Presente reservado com sucesso!");
       } else {
-        toast.error(result.error || "Erro ao reservar presente");
+        console.error(result.error || "Erro ao reservar presente");
       }
     } catch {
-      toast.error("Erro ao reservar presente");
+      console.error("Erro ao reservar presente");
     } finally {
       setLoading(false);
     }
@@ -63,22 +102,21 @@ export function ReserveGiftSheet({
       setName("");
       setCommitChecked(false);
       setReserved(false);
+      setProgress(100);
     }, 300);
   }, [onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="font-script text-3xl">
-            {reserved ? "Obrigada!" : "Reservar Presente"}
-          </DialogTitle>
-          <DialogDescription>
-            {reserved
-              ? "Agradecemos pelo presente!"
-              : "Preencha seus dados para reservar este presente."}
-          </DialogDescription>
-        </DialogHeader>
+        {reserved && (
+          <div className="h-1.5 w-full bg-primary/20">
+            <div
+              className="h-full bg-primary transition-[width] duration-100 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
 
         {reserved ? (
           <div className="px-6 py-8 text-center space-y-4">
@@ -86,6 +124,7 @@ export function ReserveGiftSheet({
               <Heart className="w-8 h-8 text-primary fill-primary" />
             </div>
             <div className="space-y-2">
+              <p className="font-script text-3xl text-primary">Obrigado!</p>
               <p className="text-lg font-medium text-foreground">
                 Agradecemos pelo presente!
               </p>
@@ -105,6 +144,15 @@ export function ReserveGiftSheet({
           </div>
         ) : (
           <div className="px-6 pb-6 space-y-6">
+            <DialogHeader className="px-0 pt-0">
+              <DialogTitle className="font-script text-3xl">
+                Reservar Presente
+              </DialogTitle>
+              <DialogDescription>
+                Preencha seus dados para reservar este presente.
+              </DialogDescription>
+            </DialogHeader>
+
             <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-xl">
               <div className="w-14 h-14 rounded-lg overflow-hidden bg-secondary shrink-0">
                 <img

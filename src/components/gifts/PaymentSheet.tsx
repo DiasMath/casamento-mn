@@ -43,6 +43,7 @@ export function PaymentSheet({
   const [preferStore, setPreferStore] = useState(false);
   const [reserveOpen, setReserveOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
+  const [giftComplete, setGiftComplete] = useState(false);
   const { isAdmin } = useAuth();
 
   // Estados do fluxo do PIX
@@ -73,6 +74,7 @@ export function PaymentSheet({
       setExpiresIn(900);
       setIsExpired(false);
       setPaymentId(null);
+      setGiftComplete(false);
       raisedAtStart.current = gift.raised;
     }
   }, [open]);
@@ -299,6 +301,27 @@ export function PaymentSheet({
               )}
             </div>
 
+            {!gift.noValue && gift.raised < gift.total && (
+              <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                <Checkbox
+                  id="giftComplete"
+                  checked={giftComplete}
+                  onCheckedChange={(v) => {
+                    const checked = v === true;
+                    setGiftComplete(checked);
+                    if (checked) {
+                      setAmount(String(gift.total - gift.raised));
+                    } else {
+                      setAmount("");
+                    }
+                  }}
+                />
+                <Label htmlFor="giftComplete" className="text-sm cursor-pointer">
+                  Presente completo — contribuir com {brl(gift.total - gift.raised)}
+                </Label>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="name">Seu Nome (Opcional)</Label>
               <Input
@@ -310,7 +333,7 @@ export function PaymentSheet({
               />
             </div>
 
-            {!gift.noValue && (
+            {!gift.noValue && gift.chaMode && (
               <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
                 <Checkbox
                   id="preferStore"
