@@ -31,7 +31,7 @@ export function ChaDePanela() {
 
   const fetchGifts = useCallback(async (scrollToTop?: boolean) => {
     try {
-      setLoading(true);
+      if (!scrollToTop) setLoading(true);
       const data = isAdmin ? await getGifts() : await getVisibleGifts();
       setGifts(data);
       if (scrollToTop && giftSectionRef.current) {

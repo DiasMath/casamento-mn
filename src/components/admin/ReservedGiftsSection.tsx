@@ -89,7 +89,7 @@ export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionPr
       </div>
 
       {/* Desktop */}
-      <div className="hidden md:block">
+      <div className="hidden md:block max-h-[500px] overflow-y-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
@@ -165,7 +165,7 @@ export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionPr
       </div>
 
       {/* Mobile */}
-      <div className="md:hidden divide-y">
+      <div className="md:hidden divide-y max-h-[500px] overflow-y-auto">
         {reservedGifts.map((g) => (
           <div key={g.id} className="p-4 space-y-3">
             <div className="flex items-center gap-3">

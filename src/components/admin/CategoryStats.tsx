@@ -261,7 +261,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
           </div>
 
           {/* Desktop: tabela detalhada */}
-          <div className="hidden md:block">
+          <div className="hidden md:block max-h-[400px] overflow-y-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
@@ -313,7 +313,7 @@ export function CategoryStats({ gifts }: CategoryStatsProps) {
           </div>
 
           {/* Mobile: cards detalhados */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden space-y-3 max-h-[400px] overflow-y-auto">
             {filteredGifts
               .sort((a, b) => a.raised - b.raised || a.total - b.total)
               .map((g) => {

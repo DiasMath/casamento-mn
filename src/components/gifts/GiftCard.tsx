@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useCategories } from "@/hooks/useCategories";
 import { Gift as GiftType, toggleGiftVisibility, cancelReservation } from "@/lib/firestoreService";
+import { doc, updateDoc, increment, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { EditGiftDialog } from "./EditGiftDialog";
 import { DeleteGiftDialog } from "./DeleteGiftDialog";
 import { PaymentSheet } from "./PaymentSheet";
@@ -71,27 +73,27 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
       setConfirmedValue(value);
       setPayOpen(false);
       setThankYouOpen(true);
-      onUpdate();
     },
-    [onUpdate],
+    [],
   );
 
   const handleSimulatePayment = async () => {
     const remaining = localGift.total - localGift.raised;
-    if (remaining <= 0) return;
+    if (remaining <= 0 || !db) return;
     const value = Math.min(remaining, 50);
     setSimulating(true);
     try {
-      const res = await fetch("/api/test-webhook", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          giftId: localGift.id,
-          amount: value,
-          contributorName: "Teste Admin",
-        }),
+      await updateDoc(doc(db, "gifts", localGift.id), {
+        raised: increment(value),
       });
-      if (!res.ok) throw new Error("Erro ao simular");
+      await addDoc(collection(db, "contributions"), {
+        giftId: localGift.id,
+        contributorName: "Teste Admin",
+        value,
+        date: serverTimestamp(),
+        paymentId: `test-${Date.now()}`,
+        method: "pix",
+      });
       toast.success(`Simulado: +R$ ${value.toFixed(2)} no presente`);
       setLocalGift((prev) => ({ ...prev, raised: prev.raised + value }));
       onUpdate();
@@ -459,6 +461,7 @@ const GiftCardComponent = ({ gift, onUpdate }: GiftCardProps) => {
       <ThankYouSheet
         open={thankYouOpen}
         onOpenChange={setThankYouOpen}
+        onClose={onUpdate}
         value={confirmedValue}
         giftName={localGift.title}
       />

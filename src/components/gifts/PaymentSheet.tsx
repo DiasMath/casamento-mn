@@ -12,13 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Copy, Check, Loader2, QrCode, Clock } from "lucide-react";
+import { Copy, Check, Loader2, QrCode, Clock, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, increment, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Gift } from "@/lib/firestoreService";
 import { brl } from "@/lib/format";
 import { ReserveGiftSheet } from "./ReserveGiftSheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function PaymentSheet({
   gift,
@@ -41,6 +42,8 @@ export function PaymentSheet({
   const [cardLoading, setCardLoading] = useState(false);
   const [preferStore, setPreferStore] = useState(false);
   const [reserveOpen, setReserveOpen] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const { isAdmin } = useAuth();
 
   // Estados do fluxo do PIX
   const [step, setStep] = useState<"form" | "pix">("form");
@@ -72,7 +75,7 @@ export function PaymentSheet({
       setPaymentId(null);
       raisedAtStart.current = gift.raised;
     }
-  }, [open, gift.raised]);
+  }, [open]);
 
   // Função para voltar ao estado inicial
   const handleCancelPix = () => {
@@ -196,6 +199,35 @@ export function PaymentSheet({
       toast.error("Erro ao gerar pagamento. Tente novamente.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestPix = async () => {
+    if (!db) return;
+    const value = parseFloat(amount) || Math.min(remaining, 50);
+    if (value <= 0) {
+      toast.error("Insira um valor válido.");
+      return;
+    }
+    setTestLoading(true);
+    try {
+      await updateDoc(doc(db, "gifts", gift.id), {
+        raised: increment(value),
+      });
+      await addDoc(collection(db, "contributions"), {
+        giftId: gift.id,
+        contributorName: name.trim() || "Teste Admin",
+        value,
+        date: serverTimestamp(),
+        paymentId: `test-${Date.now()}`,
+        method: "pix",
+      });
+      setTestLoading(false);
+      onOpenChange(false);
+      onPaymentSuccess?.(value);
+    } catch {
+      toast.error("Erro ao simular pagamento");
+      setTestLoading(false);
     }
   };
 
@@ -327,7 +359,7 @@ export function PaymentSheet({
                   Cartão
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="pix" className="mt-6">
+              <TabsContent value="pix" className="mt-6 space-y-2">
                 <Button
                   onClick={handleGeneratePix}
                   disabled={loading || !amount}
@@ -341,6 +373,21 @@ export function PaymentSheet({
                     </>
                   )}
                 </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={handleTestPix}
+                    disabled={testLoading}
+                    variant="outline"
+                    className="w-full h-10 rounded-full border-dashed text-sm text-muted-foreground"
+                  >
+                    {testLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <FlaskConical className="w-4 h-4 mr-2" />
+                    )}
+                    Testar PIX (Admin)
+                  </Button>
+                )}
               </TabsContent>
               <TabsContent value="card" className="mt-6">
                 <Button

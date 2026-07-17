@@ -8,19 +8,33 @@ Quando precisar reverter apenas as mudanças desta sessão, siga estes passos.
 
 ### Resumo das Mudanças
 
-1. **ChaHero.tsx** - Corrigido loop infinito, adicionado swipe touch
-2. **GiftCard.tsx** - Corrigido state sync, adicionado React.memo, modo reserva (chaMode), premium glow, buyLink, noValue
-3. **GiftCardPublic.tsx** - Modo reserva (chaMode), premium glow, buyLink, noValue
-4. **cha-de-panela.tsx** - Container de presentes, paleta de cores
-5. **CropModal.tsx** - Preview em tempo real + dicas de imagem + seletor aspect ratio + sem recorte
-6. **PaymentSheet.tsx** - Mostra valor restante do presente
-7. **firestoreService.ts** - Campo chaMode, reservedBy, reservedAt, buyLink, noValue; funções reserveGift/cancelReservation
-8. **ReserveGiftSheet.tsx** - Dialog centralizado para reserva de presentes
-9. **ImageUploader.tsx** - Botão "Editar" para recortar imagem existente
-10. **AddGiftFAB.tsx** - Checkbox "modo reserva", buyLink, noValue
-11. **EditGiftDialog.tsx** - Checkbox "modo reserva", buyLink, noValue
-12. **constants.ts** - Prioridade premium (💎), ícone baixa alterado (🔹)
+1. **ChaHero.tsx** - Corrigido loop infinito, swipe touch, `<picture>` element
+2. **GiftCard.tsx** - State sync, React.memo, chaMode, premium glow (borda dourada), buyLink, noValue
+3. **GiftCardPublic.tsx** - ChaMode, premium glow, buyLink, noValue
+4. **cha-de-panela.tsx** - Container, paleta de cores, filters, scroll refs
+5. **CropModal.tsx** - Preview tempo real, dicas, aspect ratio selector, "Sem recorte"
+6. **PaymentSheet.tsx** - Cartão desabilitado ("Em breve!"), "Falta" oculto para noValue, "Prefiro comprar na loja", **fix: removido gift.raised do useEffect deps** (causava bug ThankYouSheet)
+7. **firestoreService.ts** - chaMode, reservedBy, reservedAt, buyLink, noValue; reserveGift/cancelReservation
+8. **ReserveGiftSheet.tsx** - Dialog centralizado, modo genérico (sem texto chá)
+9. **ImageUploader.tsx** - Botão "Editar" para recortar existente
+10. **AddGiftFAB.tsx** - Checkbox "modo reserva", buyLink, noValue, suporte a duplicar
+11. **EditGiftDialog.tsx** - Checkbox "modo reserva", buyLink, noValue, usa useCategories()
+12. **constants.ts** - Prioridade premium (💎), ícone baixa (🔹)
 13. **GiftCard.tsx** / **GiftCardPublic.tsx** - object-contain para imagens
+14. **ThankYouSheet.tsx** - Ícone coração, auto-close 30s
+15. **useCategories.ts** - Cache sessionStorage, clearCategoriesCache()
+16. **CategoryStats.tsx** - Usa useCategories(), useMemo deps fix, noValue excluído dos stats, scroll max-h-[400px], tabelas centralizadas
+17. **admin.painel.tsx** - Usa useCategories(), noValue excluído de meta/restante/progresso, logout, "Dias para o Casamento" com subtext, tabelas centralizadas
+18. **ReservedGiftsSection.tsx** - Confirmar entrega / cancelar, coluna data, scroll max-h-[500px], tabelas centralizadas
+19. **PriorityStats.tsx** - noValue excluído dos stats
+20. **GiftFilters.tsx** - Sem checkbox "Concluídos", grid 3 colunas com ícones, bg-card
+21. **GeneralSettingsDialog.tsx** - Toggle "Chá de Panela ativo/inativo", datas, venues, maps URLs
+22. **Hero.tsx** - isReady gate, `<picture>`, auto-advance com images.length
+23. **OndeVaiSer.tsx** - Botão "Abrir no Google Maps" (sem iframe)
+24. **main.tsx** - Lazy routes, ErrorBoundary, HomeRoute/ChaRoute
+25. **RSVP** - Declínio persistido no Firestore, badge "Recusou" no admin
+26. **firestore.rules** - Regras completas de segurança
+27. **scripts/test-payment.mjs** - Script de teste local, npm script test:payment
 
 ---
 
@@ -525,3 +539,410 @@ noValue: data.noValue ?? false,
 ### Em `src/routes/cha-de-panela.tsx`
 
 - Remover seção de paleta de cores (bloco com 5 bolas coloridas)
+
+---
+
+## 9. Reverter cache do useCategories
+
+### Em `src/hooks/useCategories.ts`
+
+```tsx
+// Remover import:
+import { GIFT_CATEGORIES } from "@/lib/constants";
+
+// Remover import do firestore:
+import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+// Remover cache (sessionStorage + useState loading):
+const CACHE_KEY = "mn_categories_cache";
+const CACHE_TTL = 5 * 60 * 1000;
+
+interface CachedData {
+  categories: CategoryItem[];
+  timestamp: number;
+}
+
+const loadFromCache = (): CategoryItem[] | null => {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cached: CachedData = JSON.parse(raw);
+    if (Date.now() - cached.timestamp > CACHE_TTL) {
+      sessionStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return cached.categories;
+  } catch {
+    sessionStorage.removeItem(CACHE_KEY);
+    return null;
+  }
+};
+
+const saveToCache = (categories: CategoryItem[]) => {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ categories, timestamp: Date.now() }));
+  } catch { /* ok */ }
+};
+
+// Remover useState de loading:
+const [loading, setLoading] = useState(true);
+
+// Remover useEffect com cache check, getDocs, saveToCache, setLoading
+// Restaurar para versão simples sem cache:
+useEffect(() => {
+  const load = async () => {
+    try {
+      const snap = await getDocs(collection(db, "siteSettings"));
+      const docSnap = await getDoc(doc(db, "siteSettings", "general"));
+      let custom: string[] = [];
+      if (docSnap.exists()) {
+        custom = docSnap.data().customCategories ?? [];
+      }
+      setCustomCategories(custom);
+    } catch (error) {
+      devLog.error("Error loading custom categories:", error);
+    }
+  };
+  load();
+}, []);
+
+// Remover clearCategoriesCache export:
+export function clearCategoriesCache() {
+  sessionStorage.removeItem(CACHE_KEY);
+}
+
+// Remover loading do return:
+return { categories: allCategories, loading, refresh, clearCategoriesCache };
+// PARA:
+return { categories: allCategories, refresh };
+```
+
+---
+
+## 10. Reverter exclusão de noValue nos stats admin
+
+### Em `src/routes/admin.painel.tsx`
+
+```tsx
+// DE (bloco noValue exclusion):
+const nonNoValueGifts = gifts.filter((g) => !g.noValue);
+const totalGoal = nonNoValueGifts.reduce((s, g) => s + g.total, 0);
+const totalRaised = contributions.reduce((s, c) => s + c.value, 0);
+const guaranteedGifts = nonNoValueGifts.filter(
+  (g) => g.raised >= g.total
+).length;
+const giftsInProgress = nonNoValueGifts.filter(
+  (g) => g.raised > 0 && g.raised < g.total
+).length;
+
+// PARA:
+const totalGoal = gifts.reduce((s, g) => s + g.total, 0);
+const totalRaised = contributions.reduce((s, c) => s + c.value, 0);
+const guaranteedGifts = gifts.filter((g) => g.raised >= g.total).length;
+const giftsInProgress = gifts.filter((g) => g.raised > 0 && g.raised < g.total).length;
+
+// Remover todas as linhas: !g.noValue && de filters em:
+// - giftsPurchased (filteredGifts.filter)
+// - giftsInProgress (filteredGifts.filter)
+// - SemContribuicao (filteredGifts.filter)
+// - totalArrecadadoPresentes (filteredGifts.filter)
+
+// Remover linhas que ocultam meta/restante para noValue na tabela de categorias
+// Restaurar barra de progresso visível para todos os gifts
+```
+
+### Em `src/components/admin/CategoryStats.tsx`
+
+```tsx
+// DE (noValue exclusion no useMemo de categorias):
+const categorized = useMemo(() => {
+  const map: Record<string, { items: Gift[]; meta: number; arrecadado: number }> = {};
+  for (const cat of allCategories) {
+    map[cat.id] = { items: [], meta: 0, arrecadado: 0 };
+  }
+  for (const gift of gifts) {
+    if (gift.noValue) continue;
+    const cat = map[gift.category] || map["outros"];
+    if (cat) {
+      cat.items.push(gift);
+      cat.meta += gift.total;
+      cat.arrecadado += gift.raised;
+    }
+  }
+  return map;
+}, [gifts, allCategories]);
+
+// PARA:
+const categorized = useMemo(() => {
+  const map: Record<string, { items: Gift[]; meta: number; arrecadado: number }> = {};
+  for (const cat of allCategories) {
+    map[cat.id] = { items: [], meta: 0, arrecadado: 0 };
+  }
+  for (const gift of gifts) {
+    const cat = map[gift.category] || map["outros"];
+    if (cat) {
+      cat.items.push(gift);
+      cat.meta += gift.total;
+      cat.arrecadado += gift.raised;
+    }
+  }
+  return map;
+}, [gifts, allCategories]);
+
+// Restaurar barra de progresso visível (remover condição !item.noValue)
+// Restaurar "Meta: X" / "Restante: X" sempre visível (remover !item.noValue &&)
+```
+
+### Em `src/components/admin/PriorityStats.tsx`
+
+```tsx
+// DE (noValue exclusion):
+const priorityGroups = useMemo(() => {
+  const groups: Record<string, { items: Gift[]; meta: number; arrecadado: number }> = {};
+  for (const p of GIFT_PRIORITIES) {
+    groups[p.value] = { items: [], meta: 0, arrecadado: 0 };
+  }
+  for (const gift of gifts) {
+    if (gift.noValue) continue;
+    const g = groups[gift.priority];
+    if (g) {
+      g.items.push(gift);
+      g.meta += gift.total;
+      g.arrecadado += gift.raised;
+    }
+  }
+  return groups;
+}, [gifts]);
+
+// PARA:
+const priorityGroups = useMemo(() => {
+  const groups: Record<string, { items: Gift[]; meta: number; arrecadado: number }> = {};
+  for (const p of GIFT_PRIORITIES) {
+    groups[p.value] = { items: [], meta: 0, arrecadado: 0 };
+  }
+  for (const gift of gifts) {
+    const g = groups[gift.priority];
+    if (g) {
+      g.items.push(gift);
+      g.meta += gift.total;
+      g.arrecadado += gift.raised;
+    }
+  }
+  return groups;
+}, [gifts]);
+
+// Restaurar "Restante" sempre visível (remover condicional `restante > 0 &&`)
+```
+
+---
+
+## 11. Reverter centralização de tabelas
+
+### Em `src/routes/admin.painel.tsx`
+
+```tsx
+// Em todas as tabelas (RSVP, Detalhamento dos Presentes):
+// Remover text-center de todas as <th> e <td>
+// Voltar para alinhamento padrão (text-left ou sem classe de alinhamento)
+```
+
+### Em `src/components/admin/CategoryStats.tsx`
+
+```tsx
+// Na tabela overview:
+// Remover text-center das colunas: Arrecadado, Restante, Progresso
+
+// Na tabela detalhada:
+// Remover text-center da coluna Progresso
+```
+
+### Em `src/components/admin/ReservedGiftsSection.tsx`
+
+```tsx
+// Remover text-center de todas as <th> e <td>
+// Voltar para alinhamento padrão
+```
+
+---
+
+## 12. Reverter fix do ThankYouSheet (PaymentSheet useEffect)
+
+### Em `src/components/gifts/PaymentSheet.tsx`
+
+```tsx
+// DE (linha ~75 - deps corrigidas):
+}, [gift.id, contributionId, pollCount, pollPaymentStatus, step, toast]);
+
+// PARA (restaurar gift.raised que causava reset do step):
+}, [gift.id, gift.raised, contributionId, pollCount, pollPaymentStatus, step, toast]);
+```
+
+---
+
+## 13. Reverter scroll do CategoryStats
+
+### Em `src/components/admin/CategoryStats.tsx`
+
+```tsx
+// DE (no detail view wrapper):
+<div className="max-h-[400px] overflow-y-auto pr-1 -mr-1">
+  {/* tabela detalhada */}
+</div>
+
+// PARA: remover wrapper com max-h, manter só o conteúdo
+{/* tabela detalhada sem wrapper */}
+```
+
+---
+
+## 14. Reverter melhorias do ReservedGiftsSection
+
+### Em `src/components/admin/ReservedGiftsSection.tsx`
+
+```tsx
+// Remover scroll wrapper:
+<div className="max-h-[500px] overflow-y-auto">
+  {/* conteúdo da tabela */}
+</div>
+// PARA: remover wrapper, manter só a tabela
+
+// Remover botões de ação (Confirmar Entrega / Cancelar Reserva):
+// Remover coluna "Ações" do thead e td
+
+// Remover coluna "Reservado em":
+// Remover <th> e <td> com data de reservedAt
+```
+
+---
+
+## 15. Reverter "Prefiro comprar na loja"
+
+### Em `src/components/gifts/PaymentSheet.tsx`
+
+```tsx
+// Remover import: ReserveGiftSheet
+// Remover state: reserveOpen
+// Remover botão "Prefiro comprar na loja" do form
+// Remover modal <ReserveGiftSheet>
+// Remover toda a lógica de reserveOpen
+```
+
+---
+
+## 16. Reverter cartão desabilitado no PaymentSheet
+
+### Em `src/components/gifts/PaymentSheet.tsx`
+
+```tsx
+// DE (botão desabilitado):
+<Button type="submit" disabled={loading || submitting || paymentMethod === "card"}>
+  {submitting ? "Processando..." : "Gerar código PIX"}
+</Button>
+
+// PARA (habilitar cartão):
+<Button type="submit" disabled={loading || submitting}>
+  {submitting ? "Processando..." : "Gerar código PIX"}
+</Button>
+
+// Remover condição que oculta "Falta" para noValue:
+// DE: {!localGift.noValue && gift.raised < gift.total && (
+// PARA: {gift.raised < gift.total && (
+```
+
+---
+
+## 17. Reverter script de teste local
+
+### Deletar arquivo
+
+```
+scripts/test-payment.mjs
+```
+
+### Em `package.json`
+
+```json
+// Remover script:
+"test:payment": "node scripts/test-payment.mjs"
+```
+
+---
+
+## 18. Reverter GeneralSettingsDialog toggle chá
+
+### Em `src/components/admin/GeneralSettingsDialog.tsx`
+
+```tsx
+// Remover state: chaActive
+// Remover toggle switch "Chá de Panela ativo/inativo"
+// Remover chaActive do onSave
+// Remover do carregamento inicial do Firestore
+```
+
+---
+
+## 19. Reverter logout do admin
+
+### Em `src/routes/admin.painel.tsx`
+
+```tsx
+// Remover import: LogOut de lucide-react
+// Remover import: signOut de firebase/auth
+// Remover import: auth de firebase
+// Remover import: useNavigate de react-router-dom
+// Remover função handleLogout
+// Remover botão "Sair" do JSX
+```
+
+---
+
+## 20. Reverter RSVP declínio persistido
+
+### Em `src/routes/admin.painel.tsx`
+
+```tsx
+// Remover badge "Recusou" de RSVPs recusadas
+// Na contagem, remover separação entre confirmados/recusados
+```
+
+---
+
+## 21. Reverter botão Maps (sem iframe)
+
+### Em `src/components/home/OndeVaiSer.tsx`
+
+```tsx
+// DE (botão link):
+<a href={settings.venueGoogleMapsUrl || "#"} target="_blank" rel="noopener noreferrer">
+  <Button>Abrir no Google Maps</Button>
+</a>
+
+// PARA (restaurar iframe):
+<iframe src={settings.venueGoogleMapsUrl} ... />
+```
+
+### Em `src/components/cha/ChaDetails.tsx` (será deletado na reversão da rota)
+
+---
+
+## 22. Reverter gift duplicate
+
+### Em `src/components/gifts/AddGiftFAB.tsx`
+
+```tsx
+// Remover prop: duplicateFrom
+// Remover useEffect que popula form com dados do duplicate
+// Remover lógica que abre dialog quando duplicateFrom muda
+```
+
+---
+
+## 23. Reverter CategoryDialog emoji grid
+
+### Em `src/components/admin/CategoryDialog.tsx`
+
+```tsx
+// Se reverter custom categories entirely, restaurar para versão anterior
+// Caso contrário, manter - CategoryDialog é admin-only
+```
