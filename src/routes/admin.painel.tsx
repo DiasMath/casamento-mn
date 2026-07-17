@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { devLog } from "@/lib/devLog";
 import {
@@ -14,12 +14,18 @@ import {
   Timer,
   Hourglass,
   LogOut,
+  Plus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  X,
 } from "lucide-react";
 import {
   getGifts,
   Gift,
   getRSVPs,
   RSVP,
+  RSVPType,
   getContributions,
   Contribution,
 } from "../lib/firestoreService";
@@ -28,6 +34,14 @@ import { calculatePercentage } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   GIFT_PRIORITIES,
 } from "@/lib/constants";
@@ -39,6 +53,7 @@ import { PaletteDialog } from "@/components/admin/PaletteDialog";
 import { GeneralSettingsDialog } from "@/components/admin/GeneralSettingsDialog";
 import { CategoryDialog } from "@/components/admin/CategoryDialog";
 import { ReservedGiftsSection } from "@/components/admin/ReservedGiftsSection";
+import { AddRSVPDialog } from "@/components/admin/AddRSVPDialog";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useCategories } from "@/hooks/useCategories";
 
@@ -98,6 +113,62 @@ export function AdminPainel() {
     });
   };
 
+  // RSVP filters
+  const [rsvpFilterStatus, setRsvpFilterStatus] = useState<"all" | "confirmed" | "declined">("all");
+  const [rsvpFilterReserved, setRsvpFilterReserved] = useState<"all" | "yes" | "no">("all");
+  const [rsvpFilterType, setRsvpFilterType] = useState<"all" | RSVPType>("all");
+  const [addRsvpOpen, setAddRsvpOpen] = useState(false);
+
+  // Métricas de reservas (cha de panela)
+  const reservedGifts = gifts.filter((g) => g.reservedBy);
+  const reservedCount = reservedGifts.length;
+
+  // Cálculo de dias para o casamento
+  const diffTime = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`).getTime() - new Date().getTime();
+  const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Cálculo de dias para o chá de panela
+  const chaDiffTime = new Date(`${settings.chaDate}T${settings.chaTime}:00`).getTime() - new Date().getTime();
+  const daysUntilCha = Math.ceil(chaDiffTime / (1000 * 60 * 60 * 24));
+
+  // Métricas de RSVP (apenas confirmados)
+  const attendingRsvps = rsvps.filter((r) => r.attending !== false);
+  const declinedRsvps = rsvps.filter((r) => r.attending === false);
+  const totalPeopleConfirmed = attendingRsvps.reduce(
+    (s, r) => s + (Number(r.guestsCount) || 1),
+    0,
+  );
+
+  // Set of names that reserved gifts
+  const reservedByNames = useMemo(() => {
+    return new Set(gifts.filter((g) => g.reservedBy && g.reservedBy !== "Entregue").map((g) => g.reservedBy!.toLowerCase()));
+  }, [gifts]);
+
+  const filteredRsvps = useMemo(() => {
+    return rsvps.filter((r) => {
+      if (rsvpFilterStatus === "confirmed" && r.attending === false) return false;
+      if (rsvpFilterStatus === "declined" && r.attending !== false) return false;
+      if (rsvpFilterReserved === "yes" && !reservedByNames.has(r.name.toLowerCase())) return false;
+      if (rsvpFilterReserved === "no" && reservedByNames.has(r.name.toLowerCase())) return false;
+      if (rsvpFilterType !== "all" && r.type !== rsvpFilterType) return false;
+      return true;
+    });
+  }, [rsvps, rsvpFilterStatus, rsvpFilterReserved, rsvpFilterType, reservedByNames]);
+
+  const rsvpTypeLabel = (type?: RSVPType) => {
+    if (type === "familia_matheus") return "Família Matheus";
+    if (type === "familia_nayana") return "Família Nayana";
+    if (type === "amigos") return "Amigos";
+    return "—";
+  };
+
+  const rsvpTypeBadgeColor = (type?: RSVPType) => {
+    if (type === "familia_matheus") return "bg-blue-50 text-blue-700";
+    if (type === "familia_nayana") return "bg-pink-50 text-pink-700";
+    if (type === "amigos") return "bg-amber-50 text-amber-700";
+    return "bg-muted text-muted-foreground";
+  };
+
   if (loading || loadingData) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -128,26 +199,6 @@ export function AdminPainel() {
   const giftsInProgress = gifts.filter(
     (g) => !g.noValue && g.raised > 0 && g.raised < g.total,
   ).length;
-
-  // Métricas de reservas (cha de panela)
-  const reservedGifts = gifts.filter((g) => g.reservedBy);
-  const reservedCount = reservedGifts.length;
-
-  // Cálculo de dias para o casamento
-  const diffTime = new Date(`${settings.weddingDate}T${settings.weddingTime}:00`).getTime() - new Date().getTime();
-  const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  // Cálculo de dias para o chá de panela
-  const chaDiffTime = new Date(`${settings.chaDate}T${settings.chaTime}:00`).getTime() - new Date().getTime();
-  const daysUntilCha = Math.ceil(chaDiffTime / (1000 * 60 * 60 * 24));
-
-  // Métricas de RSVP (apenas confirmados)
-  const attendingRsvps = rsvps.filter((r) => r.attending !== false);
-  const declinedRsvps = rsvps.filter((r) => r.attending === false);
-  const totalPeopleConfirmed = attendingRsvps.reduce(
-    (s, r) => s + (Number(r.guestsCount) || 1),
-    0,
-  );
 
   const stats = [
     { label: "Meta da Lista", value: brl(totalGoal), icon: GiftIcon },
@@ -457,120 +508,202 @@ export function AdminPainel() {
 
         {/* Tabela de RSVP */}
         <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b bg-secondary/10">
-            <h2 className="font-semibold text-lg text-primary flex items-center gap-2">
-              <Users className="w-5 h-5" /> Confirmações
-            </h2>
+          <div className="px-4 sm:px-6 py-4 border-b bg-secondary/10 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-lg text-primary flex items-center gap-2">
+                <Users className="w-5 h-5" /> Confirmações
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {filteredRsvps.length} {filteredRsvps.length === 1 ? "convidado" : "convidados"}
+                {filteredRsvps.length !== rsvps.length && ` de ${rsvps.length}`}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setAddRsvpOpen(true)}
+              className="rounded-full gap-1"
+            >
+              <Plus className="w-4 h-4" /> Adicionar
+            </Button>
           </div>
-          {/* Desktop: tabela | Mobile: cards */}
+
+          {/* Filtros */}
+          <div className="px-4 sm:px-6 py-3 border-b bg-muted/20 flex flex-wrap gap-2">
+            <Select value={rsvpFilterStatus} onValueChange={(v) => setRsvpFilterStatus(v as typeof rsvpFilterStatus)}>
+              <SelectTrigger className="w-[130px] h-8 text-xs rounded-full">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="confirmed">Confirmados</SelectItem>
+                <SelectItem value="declined">Recusaram</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={rsvpFilterReserved} onValueChange={(v) => setRsvpFilterReserved(v as typeof rsvpFilterReserved)}>
+              <SelectTrigger className="w-[150px] h-8 text-xs rounded-full">
+                <SelectValue placeholder="Reservou presente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="yes">Reservou</SelectItem>
+                <SelectItem value="no">Não reservou</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={rsvpFilterType} onValueChange={(v) => setRsvpFilterType(v as typeof rsvpFilterType)}>
+              <SelectTrigger className="w-[160px] h-8 text-xs rounded-full">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="familia_matheus">Família Matheus</SelectItem>
+                <SelectItem value="familia_nayana">Família Nayana</SelectItem>
+                <SelectItem value="amigos">Amigos</SelectItem>
+              </SelectContent>
+            </Select>
+            {(rsvpFilterStatus !== "all" || rsvpFilterReserved !== "all" || rsvpFilterType !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full text-xs gap-1 text-muted-foreground"
+                onClick={() => { setRsvpFilterStatus("all"); setRsvpFilterReserved("all"); setRsvpFilterType("all"); }}
+              >
+                <X className="w-3 h-3" /> Limpar
+              </Button>
+            )}
+          </div>
+
+          {/* Desktop: tabela */}
           <div className="hidden md:block max-h-[400px] overflow-y-auto">
             <table className="w-full text-center border-collapse">
               <thead className="sticky top-0 bg-card z-10 shadow-sm">
                 <tr className="bg-muted/50 text-muted-foreground text-[10px] uppercase">
-                  <th className="px-6 py-3 font-bold text-center border-b border-border">
-                    Data
-                  </th>
-                  <th className="px-6 py-3 font-bold text-center border-b border-border">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 font-bold text-center border-b border-border">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 font-bold text-center border-b border-border">
-                    Dependentes
-                  </th>
-                  <th className="px-6 py-3 font-bold text-center border-b border-border">
-                    Total Grupo
-                  </th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Data</th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Nome</th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Status</th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Dependentes</th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Reservou Presente</th>
+                  <th className="px-4 py-3 font-bold text-center border-b border-border">Tipo</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {rsvps.map((r) => (
-                  <tr
-                    key={r.id}
-                    className={`hover:bg-muted/20 transition-colors ${r.attending === false ? "opacity-60" : ""}`}
-                  >
-                    <td className="px-6 py-4 text-center text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDate(r.confirmedAt)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <p className="text-sm font-medium">{r.name}</p>
-                      {r.email && (
-                        <p className="text-xs text-muted-foreground">
-                          {r.email}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {r.attending === false ? (
-                        <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                          Recusou
+                {filteredRsvps.map((r) => {
+                  const hasReserved = reservedByNames.has(r.name.toLowerCase());
+                  return (
+                    <tr
+                      key={r.id}
+                      className={`hover:bg-muted/20 transition-colors ${r.attending === false ? "opacity-60" : ""}`}
+                    >
+                      <td className="px-4 py-3 text-center text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDate(r.confirmedAt)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <p className="text-sm font-medium">{r.name}</p>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {r.attending === false ? (
+                          <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                            Recusou
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                            Confirmado
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
+                        {r.attending === false ? "-" : Math.max(0, r.guestsCount - 1)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {hasReserved ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 inline" />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${rsvpTypeBadgeColor(r.type)}`}>
+                          {rsvpTypeLabel(r.type)}
                         </span>
-                      ) : (
-                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                          Confirmado
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm text-muted-foreground">
-                      {r.attending === false ? "-" : Math.max(0, r.guestsCount - 1)}
-                    </td>
-                    <td className="px-6 py-4 text-center font-bold text-primary">
-                      {r.attending === false ? "-" : r.guestsCount}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredRsvps.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground text-sm">
+                      Nenhuma confirmação encontrada com os filtros selecionados.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
+
           {/* Mobile: cards */}
-          <div className="md:hidden divide-y">
-            {rsvps.map((r) => (
-              <div key={r.id} className={`p-4 space-y-2 ${r.attending === false ? "opacity-60" : ""}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium">{r.name}</p>
-                    {r.email && (
-                      <p className="text-xs text-muted-foreground">{r.email}</p>
-                    )}
+          <div className="md:hidden divide-y max-h-[400px] overflow-y-auto">
+            {filteredRsvps.map((r) => {
+              const hasReserved = reservedByNames.has(r.name.toLowerCase());
+              return (
+                <div key={r.id} className={`p-4 space-y-2 ${r.attending === false ? "opacity-60" : ""}`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{r.name}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(r.confirmedAt)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {r.attending === false ? (
+                        <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                          Recusou
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                          Confirmado
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {r.attending === false ? (
-                      <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                        Recusou
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                        Confirmado
-                      </span>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    {r.attending !== false && (
+                      <span>Grupo: <strong className="text-foreground">{r.guestsCount}</strong></span>
                     )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(r.confirmedAt)}
+                    {hasReserved && (
+                      <Badge variant="secondary" className="text-[10px] gap-1">
+                        <CheckCircle className="w-3 h-3 text-green-500" /> Reservou presente
+                      </Badge>
+                    )}
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${rsvpTypeBadgeColor(r.type)}`}>
+                      {rsvpTypeLabel(r.type)}
                     </span>
                   </div>
                 </div>
-                {r.attending !== false && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Total grupo:</span>
-                    <span className="font-bold text-primary">
-                      {r.guestsCount} pessoas
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-            {rsvps.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                Nenhuma confirmação ainda
+              );
+            })}
+            {filteredRsvps.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                Nenhuma confirmação encontrada com os filtros selecionados.
               </div>
             )}
           </div>
-          {rsvps.length > 0 && (
-            <div className="px-6 py-3 bg-muted/30 text-right text-xs font-medium text-muted-foreground">
-              Total Geral de Convidados: {totalPeopleConfirmed}
-            </div>
-          )}
+
+          {/* Footer */}
+          <div className="px-6 py-3 bg-muted/30 flex justify-between text-xs font-medium text-muted-foreground">
+            <span>
+              Total Geral: <strong className="text-foreground">{totalPeopleConfirmed}</strong> pessoas
+            </span>
+            <span>
+              Confirmados: <strong className="text-foreground">{attendingRsvps.length}</strong>
+              {" · "}Recusaram: <strong className="text-foreground">{declinedRsvps.length}</strong>
+            </span>
+          </div>
         </div>
+
+        <AddRSVPDialog
+          open={addRsvpOpen}
+          onOpenChange={setAddRsvpOpen}
+          onAdded={loadData}
+        />
       </div>
     </section>
   );

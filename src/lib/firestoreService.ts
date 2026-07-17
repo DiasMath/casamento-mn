@@ -46,6 +46,8 @@ export interface Gift {
   noValue?: boolean;
 }
 
+export type RSVPType = "familia_matheus" | "familia_nayana" | "amigos";
+
 export interface RSVP {
   id: string;
   name: string;
@@ -53,6 +55,7 @@ export interface RSVP {
   guestsCount: number;
   attending: boolean;
   confirmedAt: any;
+  type?: RSVPType;
 }
 
 export interface Message {
@@ -227,6 +230,7 @@ export const getRSVPs = async (): Promise<RSVP[]> => {
       guestsCount: Number(data.guestsCount) || 1,
       attending: data.attending ?? true,
       confirmedAt: data.confirmedAt,
+      type: data.type || undefined,
     } as RSVP;
   });
 };
@@ -347,6 +351,7 @@ export const addRSVP = async (
   name: string,
   phone: string,
   guestsCount: number,
+  type?: RSVPType,
 ): Promise<string> => {
   const rsvpCol = collection(getDb(), "rsvps");
   const docRef = await addDoc(rsvpCol, {
@@ -354,6 +359,7 @@ export const addRSVP = async (
     phone: phone.trim(),
     guestsCount: Number(guestsCount) || 1,
     attending: true,
+    type: type || null,
     confirmedAt: serverTimestamp(),
   });
   return docRef.id;

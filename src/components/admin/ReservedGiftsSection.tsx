@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { PackageCheck, Undo2, CheckCircle, Loader2, Calendar } from "lucide-react";
+import { useState, useMemo } from "react";
+import { PackageCheck, Undo2, CheckCircle, Loader2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { devLog } from "@/lib/devLog";
 import { cancelReservation, type Gift } from "@/lib/firestoreService";
@@ -24,6 +24,21 @@ function formatDate(timestamp: unknown): string {
   }
 }
 
+function toMillis(timestamp: unknown): number {
+  if (!timestamp) return 0;
+  try {
+    if (typeof timestamp === "object" && "toDate" in timestamp) {
+      return (timestamp as { toDate: () => Date }).toDate().getTime();
+    }
+    return new Date(timestamp as string | number).getTime();
+  } catch {
+    return 0;
+  }
+}
+
+type SortField = "title" | "reservedBy" | "reservedAt";
+type SortDir = "asc" | "desc";
+
 interface ReservedGiftsSectionProps {
   gifts: Gift[];
   onUpdate: () => void;
@@ -32,8 +47,39 @@ interface ReservedGiftsSectionProps {
 export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionProps) {
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [delivering, setDelivering] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("reservedAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const reservedGifts = gifts.filter((g) => g.reservedBy);
+  const reservedGifts = useMemo(() => {
+    const filtered = gifts.filter((g) => g.reservedBy);
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "title") {
+        cmp = a.title.localeCompare(b.title, "pt-BR");
+      } else if (sortField === "reservedBy") {
+        cmp = (a.reservedBy || "").localeCompare(b.reservedBy || "", "pt-BR");
+      } else {
+        cmp = toMillis(a.reservedAt) - toMillis(b.reservedAt);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [gifts, sortField, sortDir]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="w-3 h-3 ml-1 text-primary" />
+      : <ArrowDown className="w-3 h-3 ml-1 text-primary" />;
+  };
 
   const handleCancel = async (giftId: string) => {
     setCancelling(giftId);
@@ -93,10 +139,25 @@ export function ReservedGiftsSection({ gifts, onUpdate }: ReservedGiftsSectionPr
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-              <th className="text-center px-6 py-3 font-bold">Presente</th>
-              <th className="text-center px-6 py-3 font-bold">Reservado por</th>
-              <th className="text-center px-6 py-3 font-bold">Data da Reserva</th>
-              <th className="text-center px-6 py-3 font-bold">Ações</th>
+              <th
+                className="px-6 py-3 font-bold cursor-pointer select-none hover:text-foreground transition-colors"
+                onClick={() => toggleSort("title")}
+              >
+                <span className="inline-flex items-center gap-1">Presente <SortIcon field="title" /></span>
+              </th>
+              <th
+                className="px-6 py-3 font-bold cursor-pointer select-none hover:text-foreground transition-colors"
+                onClick={() => toggleSort("reservedBy")}
+              >
+                <span className="inline-flex items-center gap-1">Reservado por <SortIcon field="reservedBy" /></span>
+              </th>
+              <th
+                className="px-6 py-3 font-bold cursor-pointer select-none hover:text-foreground transition-colors"
+                onClick={() => toggleSort("reservedAt")}
+              >
+                <span className="inline-flex items-center gap-1">Data da Reserva <SortIcon field="reservedAt" /></span>
+              </th>
+              <th className="px-6 py-3 font-bold text-center">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
