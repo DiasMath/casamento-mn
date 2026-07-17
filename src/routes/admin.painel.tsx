@@ -200,7 +200,6 @@ export function AdminPainel() {
     const fee = c.paymentMethod === "pix" ? 0.01 : 0;
     return s + c.value * (1 - fee);
   }, 0);
-  const remainingNet = Math.max(0, totalGoal - Math.round(totalNet));
 
   const guaranteedGifts = gifts.filter((g) => !g.noValue && g.raised >= g.total).length;
   const giftsInProgress = gifts.filter(
@@ -220,7 +219,6 @@ export function AdminPainel() {
       label: "Valor Restante",
       value: brl(remainingValue),
       icon: Wallet,
-      subtext: `Líquido: ${brl(remainingNet)}`,
     },
     {
       label: "Status dos Presentes",

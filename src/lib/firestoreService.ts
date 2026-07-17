@@ -314,6 +314,7 @@ export const getContributions = async (): Promise<Contribution[]> => {
       giftTitle: data.giftTitle || "",
       contributorName: data.contributorName || "Anônimo",
       value: Number(data.value) || 0,
+      paymentMethod: data.paymentMethod,
       date: data.date,
     } as Contribution;
   });
