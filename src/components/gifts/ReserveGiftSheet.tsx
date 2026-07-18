@@ -196,7 +196,7 @@ export function ReserveGiftSheet({
                 className="text-sm text-muted-foreground leading-snug cursor-pointer"
               >
                 {mode === "cha"
-                  ? "Me comprometerei em levar este presente no dia do chá de panela 😊"
+                  ? "Me comprometerei em levar este presente no dia do chá de panela 😊. Caso seja um presente que não consiga levar no chá (Ex: Geladeira, Tv, Sofá,  ...), fale conosco que iremos representar seu presente de forma bem especial no nosso chá!"
                   : "Me comprometerei em levar este presente 😊"}
               </Label>
             </div>
