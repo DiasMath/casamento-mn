@@ -101,12 +101,12 @@ export function EditGiftDialog({
         marca: validMarca,
         image: validImage,
         imageDesktop: finalImageDesktop,
-        total: chaMode || noValue ? 1 : totalNum,
-        raised: chaMode || noValue ? 0 : raisedNum,
+        total: noValue ? 0 : totalNum,
+        raised: chaMode ? gift.raised : noValue ? 0 : raisedNum,
         category,
         priority,
         chaMode,
-        buyLink: chaMode ? buyLink : "",
+        buyLink,
         noValue,
       });
 
@@ -121,7 +121,7 @@ export function EditGiftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="sm:max-w-md rounded-3xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 pt-8">
         <DialogHeader>
           <DialogTitle className="font-script text-3xl">
             Editar presente
@@ -191,7 +191,7 @@ export function EditGiftDialog({
               )}
             </>
           )}
-          {!chaMode && !noValue && (
+          {!noValue && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="g-total">Valor total (R$)</Label>
@@ -215,8 +215,9 @@ export function EditGiftDialog({
                   step="0.01"
                   value={raised}
                   onChange={(e) => setRaised(e.target.value)}
+                  disabled={chaMode}
                   className="h-11 rounded-xl mt-1.5"
-                  required
+                  required={!chaMode}
                 />
               </div>
             </div>

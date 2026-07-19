@@ -108,7 +108,7 @@ export function ReserveGiftSheet({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden w-[calc(100%-2rem)] sm:w-full pt-4" onOpenAutoFocus={(e: Event) => e.preventDefault()}>
         {reserved && (
           <div className="h-1.5 w-full bg-primary/20">
             <div

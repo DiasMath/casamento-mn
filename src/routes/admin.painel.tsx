@@ -189,7 +189,10 @@ export function AdminPainel() {
   // Cálculos de Presentes (bruto)
   const totalRaised = gifts.reduce((s, g) => s + g.raised, 0);
   const totalGoal = gifts.filter((g) => !g.noValue).reduce((s, g) => s + g.total, 0);
-  const remainingValue = Math.max(0, totalGoal - totalRaised);
+  const reservedTotal = gifts
+    .filter((g) => g.reservedBy && g.reservedBy !== "Entregue" && !g.noValue)
+    .reduce((s, g) => s + g.total, 0);
+  const remainingValue = Math.max(0, totalGoal - totalRaised - reservedTotal);
   const overallPct =
     totalGoal > 0
       ? Math.min(100, Math.round((totalRaised / totalGoal) * 100))
@@ -219,6 +222,7 @@ export function AdminPainel() {
       label: "Valor Restante",
       value: brl(remainingValue),
       icon: Wallet,
+      subtext: reservedTotal > 0 ? `${brl(reservedTotal)} em presentes reservados` : undefined,
     },
     {
       label: "Status dos Presentes",

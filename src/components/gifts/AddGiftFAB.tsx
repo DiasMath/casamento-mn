@@ -87,7 +87,7 @@ export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: Add
       const { validTitle, totalNum, validMarca } = validateGiftData(
         title,
         imageUrl,
-        chaMode || noValue ? "1" : total,
+        noValue ? "0" : total,
         undefined,
         marca,
       );
@@ -97,13 +97,13 @@ export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: Add
         marca: validMarca,
         image: imageUrl,
         imageDesktop: imageDesktopUrl,
-        total: chaMode || noValue ? 1 : totalNum,
+        total: noValue ? 0 : totalNum,
         raised: 0,
         hidden: false,
         category,
         priority,
         chaMode,
-        buyLink: chaMode ? buyLink : "",
+        buyLink,
         noValue,
       });
 
@@ -215,7 +215,7 @@ export function AddGiftFAB({ onGiftAdded, duplicateFrom, onDuplicateClose }: Add
               )}
             </>
           )}
-          {!chaMode && !noValue && (
+          {!noValue && (
             <div>
               <Label htmlFor="total">Valor Total (R$)</Label>
               <Input
